@@ -1,0 +1,73 @@
+<h2>Actividades Evaluables</h2>
+
+<div class=formulario>
+	<input type=hidden id=actividad-id>
+
+	<label for=actividad-codigo>Código</label>
+	<input type=text id=actividad-codigo maxlength=50 required>
+
+	<label for=actividad-nombre>Nombre</label>
+	<input type=text id=actividad-nombre size=50 maxlength=150 required>
+
+	<label for=actividad-fecha>Fecha</label>
+	<input type=date id=actividad-fecha>
+</div>
+
+<div class=subbloque>
+	<h3>Asociar indicador</h3>
+
+	<div class=fila-asociacion>
+		<input type=text id=actividad-buscar-indicador placeholder=Buscar indicador por código o nombre>
+		<input type=hidden id=actividad-id-indicador-seleccionado >
+		<input type=text id=actividad-indicador-seleccionado placeholder=Indicador seleccionado readonly>
+		<select id=actividad-tipo-calificacion>
+			<option value=ponderada>Ponderada</option>
+			<option value=maxima>Máxima</option>
+			<option value=minima>mínima</option>
+		</select>
+		<input type=number id=actividad-peso placeholder=Peso min=0>
+		<button type=button id=actividad-anadir-indicador>Añadir</button>
+	</div>
+
+	<div id=actividad-sugerencias-indicador class=lista-sugerencias></div>
+
+		<table class='tabla tabla-editor'>
+		<thead>
+			<tr>
+			<th>Indicador</th>
+			<th>Tipo</th>
+			<th>Peso</th>
+			<th>Acción</th>
+			</tr>
+		</thead>
+	<tbody id=actividad-tabla-indicadores></tbody>
+	</table>
+</div>
+
+<div class=acciones-formulario>
+	<button type=button id=actividad-guardar >Guardar</button>
+	<button type=button id=actividad-cancelar-edicion hidden>Cancelar edición</button>
+</div>
+
+<p id=actividad-mensaje class=mensaje></p>
+
+<div class=buscador>
+	<svg class=icono-lupa viewBox="0 0 24 24" width="16" height="16">
+		<circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+		<line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+	</svg>
+	<input type=text id=actividad-buscador placeholder="Buscar por código, nombre, fecha o indicador...">
+</div>
+
+<table class=tabla>
+	<thead>
+		<tr>
+		<th>Código</th>
+		<th>Nombre</th>
+		<th>Fecha</th>
+		<th>Indicadores asociados</th>
+		<th>Acciones</th>
+		</tr>
+	</thead>
+	<tbody id=tabla-actividades></tbody>
+</table>

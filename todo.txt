@@ -1,0 +1,2 @@
+- Pasar a MVC el backend
+- Al insertar calificaciones, el feedback no se nota. Es necesario p.ej pasar al siguiente alumno y así dejar las calificaciones en blanco.

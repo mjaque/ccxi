@@ -1,0 +1,10 @@
+{
+  "private": true,
+  "devDependencies": {
+    "eslint": "^8.0.0"
+  },
+  "scripts": {
+    "lint": "eslint frontend/js/",
+    "lint:fix": "eslint frontend/js/ --fix"
+  }
+}

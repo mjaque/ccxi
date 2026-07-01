@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vista>
+      <h2>Alumnado</h2>
+
+      <form id="form-alumno" class="formulario">
+        <input type="hidden" id="alumno-id" />
+        <label for="alumno-nombre">Nombre</label>
+        <input type="text" id="alumno-nombre" maxlength="150" required="true" />
+
+        <div class="acciones-formulario">
+          <button type="submit">Guardar</button>
+          <button type="button" id="cancelar-edicion" hidden="true">Cancelar edición</button>
+        </div>
+      </form>
+
+      <p id="mensaje" class="mensaje"> </p>
+
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-alumnos"> </tbody>
+      </table>
+</vista>

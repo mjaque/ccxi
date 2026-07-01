@@ -1,0 +1,153 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background: #f4f4f4;
+  color: #222;
+}
+
+.contenedor {
+  max-width: 960px;
+  margin: 32px auto;
+  padding: 16px;
+}
+
+.cabecera {
+  margin-bottom: 24px;
+}
+
+.bloque {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.formulario {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.formulario input[type="text"] {
+  padding: 8px;
+  font-size: 14px;
+}
+
+.acciones-formulario {
+  display: flex;
+  gap: 8px;
+}
+
+button {
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla th,
+.tabla td {
+  border: 1px solid #ddd;
+  padding: 8px;
+  text-align: left;
+}
+
+.mensaje {
+  min-height: 20px;
+  margin: 8px 0 16px;
+}
+
+.mensaje.ok {
+  color: #0a6b2d;
+}
+
+.mensaje.error {
+  color: #a32020;
+}
+
+.selector-multiple {
+  display: grid;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.selector-multiple label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.texto-vacio {
+  margin: 0;
+  color: #666;
+  font-style: italic;
+}
+
+.subbloque {
+  margin: 12px 0;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+}
+
+.fila-asociacion {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.fila-asociacion select,
+.fila-asociacion input {
+  padding: 8px;
+}
+
+.tabla-editor input[type="number"] {
+  width: 90px;
+  padding: 6px;
+}
+
+.lista-sugerencias {
+  display: grid;
+  gap: 4px;
+  margin: 8px 0 12px;
+}
+
+.item-sugerencia {
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  background: #fff;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.vista-oculta {
+  display: none;
+}
+
+.salida-informe {
+  margin-top: 20px;
+}
+
+.documento-informe {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.cabecera-informe p {
+  margin: 4px 0;
+}
+ 

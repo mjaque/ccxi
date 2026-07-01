@@ -1,0 +1,23 @@
+{
+	"env": {
+		"browser": true,
+		"es2022": true
+	},
+	"parserOptions": {
+		"sourceType": "module",
+		"ecmaVersion": 2022
+	},
+	"rules": {
+		"semi": ["error", "never"],
+		"indent": ["error", "tab"],
+		"quotes": ["error", "single"],
+		"no-unused-vars": ["warn", { "args": "none" }],
+		"no-undef": "error",
+		"prefer-const": "warn",
+		"no-var": "error",
+		"no-console": "warn",
+		"no-trailing-spaces": "warn",
+		"eol-last": ["error", "always"],
+		"no-multiple-empty-lines": ["warn", { "max": 2 }]
+	}
+}

@@ -1,0 +1,34 @@
+<h2>Resultados de Aprendizaje</h2>
+
+<div class=formulario>
+	<input type=hidden id=resultado-id>
+
+	<label for=resultado-codigo>Código</label>
+	<input type=text id=resultado-codigo maxlength=50 required>
+
+	<label for=resultado-nombre>Nombre</label>
+	<input type=text id=resultado-nombre maxlength=150 required>
+
+	<label for=resultado-peso>Peso</label>
+	<input type=number id=resultado-peso maxlength=150 required>
+
+	<div class=acciones-formulario>
+		<button type=button id=resultado-guardar >Guardar</button>
+		<button type=button id=resultado-cancelar hidden>Cancelar edición</button>
+	</div>
+</div>
+
+<p id=resultado-mensaje class=mensaje></p>
+
+<table class=tabla>
+	<thead>
+		<tr>
+		<th>Código</th>
+		<th>Nombre</th>
+		<th>Peso</th>
+		<th>Acciones</th>
+		</tr>
+	</thead>
+	<tbody id=resultado-tabla ></tbody>
+</table>
+

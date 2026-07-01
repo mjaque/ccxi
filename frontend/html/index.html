@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang=es>
+<head>
+	<meta charset=UTF-8 />
+	<meta name=viewport content='width=device-width, initial-scale=1.0' />
+	<title>ccxi</title>
+	<link rel=icon type=image/svg+xml href=favicon.svg />
+	<link rel=stylesheet href=css/reset.css />
+	<link rel=stylesheet href=css/app.css />
+	<link rel=stylesheet href=css/ccxi.css />
+</head>
+<body>
+	<h1>CCxI - Calificador de Compentencias por Indicadores</h1>
+	
+	<div class='vista' id=divEstado >Comprobando servidor...</div>
+		
+	<div class=vista id=divModulos ></div>
+ 
+	<div class=vista id=divMenu >
+		<a href=# data-vista=estudiantes class=activa >Estudiantes</a>
+		<a href=# data-vista=resultados >Resultados</a>
+		<a href=# data-vista=indicadores >Indicadores</a>
+		<a href=# data-vista=actividades >Actividades</a>
+		<a href=# data-vista=calificaciones >Calificaciones</a>
+		<a href=# data-vista=informes >Informes</a>
+	</div>
+
+ 	<div class=vista id=divEstudiantes ></div>
+
+	<div class=vista id=divResultados ></div>
+	
+	<div class=vista id=divIndicadores ></div>
+
+	<div class=vista id=divActividades ></div>
+
+	<div class=vista id=divCalificaciones ></div>
+
+	<div class=vista id=divInformes ></div>
+  
+	<script type="module" src="js/app.js"> </script>
+</body>
+</html>

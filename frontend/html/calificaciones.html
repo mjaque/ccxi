@@ -1,0 +1,39 @@
+<h2>Calificaciones</h2>
+
+<div class=formulario>
+	<label for=calificaciones-actividad>Actividad</label>
+	<select id=calificaciones-actividad></select>
+
+	<label for=calificaciones-estudiante>Estudiante</label>
+	<select id=calificaciones-estudiante></select>
+</div>
+
+<table class=tabla>
+	<thead>
+		<tr>
+			<th>Indicador</th>
+			<th>Calificación actual</th>
+			<th>Nivel de logro (0-10)</th>
+			<th>Incremento (+/-)</th>
+		</tr>
+	</thead>
+	<tbody id=calificaciones-tbody></tbody>
+	<tfoot id=calificaciones-add-foot>
+		<tr>
+			<td colspan=4>
+				<div class=fila-asociacion>
+					<input type=text id=calif-buscar placeholder="Buscar indicador por código o nombre">
+					<input type=number id=calif-incremento-add placeholder="Incremento" step=any>
+					<button type=button id=calif-anadir>Añadir</button>
+				</div>
+				<div id=calif-sugerencias class=lista-sugerencias></div>
+			</td>
+		</tr>
+	</tfoot>
+</table>
+
+<div class=acciones-formulario>
+	<button type=button id=calificaciones-guardar hidden>Guardar calificaciones</button>
+</div>
+
+<p id=calificaciones-mensaje class=mensaje></p>

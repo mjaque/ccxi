@@ -1,0 +1,180 @@
+/* Variables Globales */
+:root {
+	--color-fondo: whitesmoke;
+	--color-fondo-vista: white;
+}
+
+/* Elementos */
+body {
+	margin: 1rem;
+	background-color: var(--color-fondo);
+	font-family: sans;
+}
+
+h1, h2, h3 {
+	font-weight: bold;
+	margin: 1rem 0rem;
+}
+
+h1 {
+	font-size: 1.5rem;
+}
+
+h2 {
+	font-size: 1.3rem;
+}
+
+h3 {
+	font-size: 1.1rem;
+}
+
+
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+th, td {
+	border: 1px solid #ddd;
+	padding: 8px;
+	text-align: left;
+}
+
+td button {
+	margin: 0px 0.5rem;
+}
+
+/* Clases generales */
+p.mensaje {
+	min-height: 1.3rem;
+	margin: 0.5rem 0 1rem;
+}
+
+p.error {
+	min-height: 1.3rem;
+	margin: 0.5rem 0 1rem;
+	color: red;
+}
+
+p.informacion {
+	min-height: 1.3rem;
+	margin: 0.5rem 0 1rem;
+	color: green;
+}
+
+
+#divEstado {
+	display: block;
+	background-color: var(--color-fondo);
+	border: none;
+}
+
+#divModulos {
+	display: block;
+}
+
+#divMenu {
+	display: flex;
+}
+
+#divMenu > a {
+	display: inline-block;
+	padding: 0.5rem 1rem;
+	border: 1px solid grey;
+	border-radius: 6px;
+	background: lightgrey;
+	color: black;
+	text-decoration: none;
+}
+
+#divMenu > a:hover,
+#divMenu > a:focus {
+	background: #ececec;
+	outline: none;
+}
+
+#divMenu > a.activo {
+	background: #dfe8f6;
+	border-color: #9eb6d8;
+	font-weight: 600;
+}
+
+div.vista {
+	display: none;
+	align-items: center;
+	gap: 0.5rem;
+	flex-wrap: wrap;
+	margin-bottom: 1rem;
+	padding: 1rem;
+	background: var(--color-fondo-vista);
+	border: 1px solid lightgrey;
+	border-radius: 8px;
+}
+
+div.vista select,
+div.vista input {
+	padding: 0.3rem;
+}
+
+div.vista.activa {
+	display: block;
+}
+
+div.formulario {
+	display: grid;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+
+div.buscador {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+	padding: 0.5rem;
+	border: 1px solid #ccc;
+	border-radius: 6px;
+	background: #fafafa;
+}
+
+div.buscador input {
+	flex: 1;
+	border: none;
+	outline: none;
+	background: transparent;
+	font-size: 0.95rem;
+}
+
+svg.icono-lupa {
+	flex-shrink: 0;
+	color: #888;
+}
+
+#calificaciones-add-foot td {
+	position: relative;
+}
+
+#calificaciones-add-foot .lista-sugerencias {
+	position: absolute;
+	bottom: 100%;
+	left: 0;
+	right: 0;
+	z-index: 10;
+	background: white;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+	margin: 0;
+	max-height: 200px;
+	overflow-y: auto;
+}
+
+#calificaciones-add-foot .fila-asociacion {
+	margin-bottom: 0;
+}
+
+#actividad-peso:disabled {
+	opacity: 0.4;
+	background: #eee;
+}
+

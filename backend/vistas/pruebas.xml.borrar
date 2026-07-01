@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vista>
+	  <h2>Pruebas Evaluables</h2>
+
+	  <form id="form-prueba" class="formulario">
+		<input type="hidden" id="prueba-id" />
+
+		<label for="prueba-codigo">Código</label>
+		<input type="text" id="prueba-codigo" maxlength="50" required="true" />
+
+		<label for="prueba-nombre">Nombre</label>
+		<input type="text" id="prueba-nombre" maxlength="150" required="true" />
+
+		<label for="prueba-fecha">Fecha</label>
+		<input type="date" id="prueba-fecha" />
+
+		<div class="subbloque">
+		  <h3>Asociar indicador</h3>
+
+		  <div class="fila-asociacion">
+			<input type="text" id="buscar-indicador-prueba" placeholder="Buscar indicador por código o nombre" />
+			<input type="hidden" id="indicador-prueba-id-seleccionado" />
+			<input type="text" id="indicador-prueba-texto-seleccionado" placeholder="Indicador seleccionado" readonly="true" />
+			<input type="number" id="indicador-prueba-peso" min="1" step="1" placeholder="Peso" />
+			<button type="button" id="anadir-indicador-prueba">Añadir</button>
+		  </div>
+
+		  <div id="sugerencias-indicador-prueba" class="lista-sugerencias"> </div>
+
+		  <table class="tabla tabla-editor">
+			<thead>
+			  <tr>
+				<th>Indicador</th>
+				<th>Peso</th>
+				<th>Acción</th>
+			  </tr>
+			</thead>
+			<tbody id="tabla-prueba-indicadores-editor"> </tbody>
+		  </table>
+		</div>
+
+		<div class="acciones-formulario">
+		  <button type="submit">Guardar</button>
+		  <button type="button" id="cancelar-edicion-prueba" hidden="true">Cancelar edición</button>
+		</div>
+	  </form>
+
+	  <p id="mensaje-prueba" class="mensaje"> </p>
+
+	  <table class="tabla">
+		<thead>
+		  <tr>
+			<th>ID</th>
+			<th>Código</th>
+			<th>Nombre</th>
+			<th>Fecha</th>
+			<th>Indicadores asociados</th>
+			<th>Acciones</th>
+		  </tr>
+		</thead>
+		<tbody id="tabla-pruebas"> </tbody>
+	  </table>
+</vista>

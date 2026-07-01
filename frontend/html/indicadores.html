@@ -1,0 +1,59 @@
+<h2>Indicadores de Logro</h2>
+
+<div class=formulario>
+	<input type=hidden id=indicador-id>
+
+	<label for=indicador-codigo>Código</label>
+	<input type=text id=indicador-codigo maxlength=50 required>
+
+	<label for=indicador-nombre>Nombre</label>
+	<input type=text id=indicador-nombre maxlength=150 required>
+
+	<div class=subbloque>
+		<h3>Asociar resultado</h3>
+
+		<div class=fila-asociacion>
+			<select id=indicador-resultado-select></select>
+			<input type=number id=indicador-resultado-peso min=1 step=1 placeholder=Peso>
+			<button type=button id=indicador-anadir-resultado>Añadir</button>
+		</div>
+
+		<table class=tabla tabla-editor>
+			<thead>
+				<tr>
+				<th>Resultado</th>
+				<th>Peso</th>
+				<th>Acción</th>
+				</tr>
+			</thead>
+			<tbody id=indicador-resultados-tabla></tbody>
+		</table>
+	</div>
+
+	<div class=acciones-formulario>
+		<button type=button id=indicador-guardar>Guardar</button>
+		<button type=button id=cancelar-edicion-indicador hidden>Cancelar edición</button>
+	</div>
+</div>
+
+<p id=indicador-mensaje class=mensaje></p>
+
+<div class=buscador>
+	<svg class=icono-lupa viewBox="0 0 24 24" width="16" height="16">
+		<circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="2" fill="none"/>
+		<line x1="15" y1="15" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+	</svg>
+	<input type=text id=indicador-buscador placeholder="Buscar por código, nombre o resultado...">
+</div>
+
+<table class=tabla>
+	<thead>
+		<tr>
+		<th>Código</th>
+		<th>Nombre</th>
+		<th>Resultados asociados</th>
+		<th>Acciones</th>
+		</tr>
+	</thead>
+	<tbody id=indicador-tabla></tbody>
+</table>
