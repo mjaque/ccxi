@@ -128,6 +128,7 @@ export class ControladorResultados extends Controlador{
 			}
 			this.emitirMensaje('cambioResultado')
 			this.#limpiar()
+			this.#campoCodigo.focus()
 		}
 		catch (error) {
 			console.error(error)
