@@ -135,6 +135,7 @@ ccxi/
 python3 backend/app.py          # Arrancar servidor (http://127.0.0.1:8000)
 npm run lint                    # Lint JS frontend (ESLint)
 npm run lint:fix                # Lint + auto-corregir
+npm test                        # Tests Python (unittest + discover)
 ```
 
 ## Convenciones de código
@@ -162,7 +163,7 @@ npm run lint:fix                # Lint + auto-corregir
 - `backend/controladores/` y `backend/vistas/` son legacy del viejo sistema con `minidom`
 - `frontend/js/api.js` (raíz) es legacy — el nuevo cliente está en `frontend/js/servicios/api.js`
 - `backend/repositories/informes.py` tiene funciones duplicadas (`_build_fecha_filter`, `_clamp_nota_indicador`, `_calcular_notas_indicadores`, `get_informe_alumnado`)
-- `tests/` ya no está vacío — contiene `dataset1.sql` (10 estudiantes, 5 RA, 25 indicadores, 5 actividades)
+- `tests/` contiene `dataset1.sql` y tests Python (unittest con mock de BD)
 - `backend/servicios/` y `backend/informes/` están vacíos
 - TO DOs en: `modulos.js` (2 métodos sin implementar)
 - `app.py` línea 9: import muerto de `ControladorPrincipal` (nunca se usa)

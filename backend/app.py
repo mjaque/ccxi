@@ -753,13 +753,13 @@ class CCXIHandler(SimpleHTTPRequestHandler):
             return "El código es obligatorio"
         if not nombre:
             return "El nombre es obligatorio"
-        if not peso:
+        if peso is None:
             return "El peso es obligatorio"
 
         try:
             peso_num = int(peso)
-            if peso_num <= 0:
-                return "El peso debe ser mayor que 0"
+            if peso_num < 0:
+                return "El peso no puede ser negativo"
         except ValueError:
             return "El peso debe ser un número entero"
 
