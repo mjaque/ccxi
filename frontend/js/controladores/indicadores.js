@@ -227,6 +227,7 @@ export class ControladorIndicadores extends Controlador{
 			this.emitirMensaje('cambioIndicador')
 			this.#limpiar()
 			this.#cargar()
+			this.#campoCodigo.focus()
 		} catch(error){
 			this.mostrarError(error.message)
 		}
