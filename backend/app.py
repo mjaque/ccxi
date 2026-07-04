@@ -38,7 +38,11 @@ from repositories.calificaciones import (
     guardar_calificacion,
     borrar_calificacion,
 )
-from repositories.informes import get_informe_alumnado, get_informe_grupo
+from repositories.informes import (
+    get_informe_alumnado,
+    get_informe_actividades_por_resultados,
+    get_informe_grupo,
+)
 
 
 ROOT_DIR = Path(__file__).resolve().parent.parent
@@ -200,6 +204,46 @@ class CCXIHandler(SimpleHTTPRequestHandler):
 
             try:
                 informe = get_informe_alumnado(modulo, estudiante_id, fecha_informe)
+            except ValueError as exc:
+                self._send_json({"ok": False, "error": str(exc)}, status=400)
+                return
+
+            self._send_json({
+                "ok": True,
+                "item": informe
+            })
+            return
+
+        if path == "/api/informes/actividades-por-resultados":
+            modulo = self._get_modulo()
+            if modulo is None:
+                return
+
+            params = parse_qs(parsed.query)
+            estudiante_id = self._read_optional_positive_int(params.get("estudiante_id"))
+            fecha_informe = (params.get("fecha_informe", [""])[0] or "").strip() or None
+
+            if estudiante_id is None:
+                self._send_json({
+                    "ok": False,
+                    "error": "Debes seleccionar un estudiante"
+                }, status=400)
+                return
+
+            if fecha_informe:
+                try:
+                    date.fromisoformat(fecha_informe)
+                except ValueError:
+                    self._send_json({
+                        "ok": False,
+                        "error": "La fecha del informe no es válida"
+                    }, status=400)
+                    return
+
+            try:
+                informe = get_informe_actividades_por_resultados(
+                    modulo, estudiante_id, fecha_informe
+                )
             except ValueError as exc:
                 self._send_json({"ok": False, "error": str(exc)}, status=400)
                 return

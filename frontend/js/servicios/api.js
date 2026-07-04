@@ -200,4 +200,10 @@ export class API{
 		return this.#pedir(url)
 	}
 
+	async getInformeActividadesPorResultados(estudianteId, fechaInforme) {
+		let url = `/api/informes/actividades-por-resultados?estudiante_id=${estudianteId}`
+		if (fechaInforme) url += `&fecha_informe=${fechaInforme}`
+		return this.#pedir(url)
+	}
+
 }

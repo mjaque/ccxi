@@ -61,7 +61,7 @@ export class ControladorIndicadores extends Controlador{
 	#leerResultados(indicador){
 		if (!indicador.resultados || indicador.resultados.length == 0)
 			return '-'
-		return indicador.resultados.map((r) => `${r.codigo}`).join(', ')
+		return indicador.resultados.map((r) => `${r.codigo}(${r.peso})`).join(', ')
 	}
 
 	#cargarTablaIndicadores(){

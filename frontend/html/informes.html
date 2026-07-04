@@ -21,4 +21,23 @@
 	<p id=informe-mensaje class=mensaje></p>
 </div>
 
-<!-- Otros informes se añadirán aquí en el futuro -->
+<div class=bloque>
+	<h3>Informe de Actividades por Resultados</h3>
+	<p class=instrucciones>Muestra las actividades realizadas por un estudiante hasta una fecha, agrupadas por resultado de aprendizaje, con su calificación en cada una.</p>
+
+	<div class=formulario>
+		<label for=actividades-resultados-estudiante-select>Estudiante</label>
+		<select id=actividades-resultados-estudiante-select required>
+			<option value=''>— Seleccionar estudiante —</option>
+		</select>
+
+		<label for=actividades-resultados-fecha>Fecha (opcional)</label>
+		<input type=date id=actividades-resultados-fecha>
+
+		<div class=acciones-formulario>
+			<button type=button id=actividades-resultados-generar>Generar informe</button>
+		</div>
+	</div>
+
+	<p id=actividades-resultados-mensaje class=mensaje></p>
+</div>

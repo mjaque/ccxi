@@ -264,6 +264,187 @@ def get_informe_alumnado(modulo: str, alumno_id: int, fecha_informe: str | None 
         }
 
 
+def get_informe_actividades_por_resultados(
+    modulo: str, alumno_id: int, fecha_informe: str | None = None
+) -> dict:
+    with get_connection(modulo) as conn:
+        alumno = conn.execute("""
+            SELECT id, nombre
+            FROM Estudiante
+            WHERE id = ?
+        """, (alumno_id,)).fetchone()
+
+        if alumno is None:
+            raise ValueError("El alumno seleccionado no existe")
+
+        filtro_fecha, params_fecha = _build_fecha_filter("a", fecha_informe)
+
+        rows = [
+            dict(row) for row in conn.execute(f"""
+                SELECT
+                    r.id AS resultado_id,
+                    r.codigo AS resultado_codigo,
+                    r.nombre AS resultado_nombre,
+                    a.id AS actividad_id,
+                    a.codigo AS actividad_codigo,
+                    a.nombre AS actividad_nombre,
+                    a.fecha AS actividad_fecha,
+                    i.id AS indicador_id,
+                    ir.peso AS ir_peso,
+                    ia.tipo_calificacion,
+                    ia.peso AS ia_peso,
+                    c.nivel_logro,
+                    c.incremento
+                FROM "Resultado" r
+                JOIN "Indicador_Resultado" ir ON ir.id_resultado = r.id
+                JOIN "Indicador" i ON i.id = ir.id_indicador
+                JOIN "Indicador_Actividad" ia ON ia.id_indicador = i.id
+                JOIN "Actividad" a ON a.id = ia.id_actividad
+                LEFT JOIN "Calificacion" c
+                    ON c.id_actividad = a.id
+                    AND c.id_indicador = i.id
+                    AND c.id_estudiante = ?
+                WHERE {filtro_fecha}
+                ORDER BY r.codigo COLLATE NOCASE ASC,
+                    a.fecha ASC,
+                    a.codigo COLLATE NOCASE ASC,
+                    i.codigo COLLATE NOCASE ASC
+            """, (alumno_id, *params_fecha)).fetchall()
+        ]
+
+        resultados_map: dict[int, dict] = {}
+        for row in rows:
+            res_id = row["resultado_id"]
+            if res_id not in resultados_map:
+                resultados_map[res_id] = {
+                    "id": res_id,
+                    "codigo": row["resultado_codigo"],
+                    "nombre": row["resultado_nombre"],
+                    "actividades": {},
+                }
+
+            act_id = row["actividad_id"]
+            if act_id not in resultados_map[res_id]["actividades"]:
+                resultados_map[res_id]["actividades"][act_id] = {
+                    "id": act_id,
+                    "codigo": row["actividad_codigo"],
+                    "nombre": row["actividad_nombre"],
+                    "fecha": row["actividad_fecha"],
+                    "tipo_calificacion": row["tipo_calificacion"],
+                    "peso": row["ia_peso"],
+                    "items": [],
+                }
+
+            nivel = row["nivel_logro"]
+            nota = None
+            if nivel is not None:
+                nota = _clamp_nota_indicador(
+                    float(nivel) + float(row["incremento"] or 0)
+                )
+
+            resultados_map[res_id]["actividades"][act_id]["items"].append({
+                "peso": row["ir_peso"],
+                "nota": nota,
+            })
+
+        resultados_notas, indicadores_por_resultado = _get_resultados_y_relaciones(conn)
+
+        rows_calculo = [
+            dict(row) for row in conn.execute(f"""
+                SELECT
+                    c.id_indicador,
+                    c.nivel_logro,
+                    c.incremento,
+                    a.fecha
+                FROM "Calificacion" c
+                JOIN "Actividad" a ON a.id = c.id_actividad
+                WHERE c.id_estudiante = ?
+                  AND {filtro_fecha}
+                ORDER BY a.fecha ASC, c.id_actividad ASC, c.id_indicador ASC
+            """, (alumno_id, *params_fecha)).fetchall()
+        ]
+
+        notas_indicadores = _calcular_notas_indicadores(rows_calculo)
+
+        resultados_notas_map = {}
+        suma_ponderada_final = 0.0
+        suma_pesos_final = 0.0
+
+        for resultado in resultados_notas:
+            relaciones = indicadores_por_resultado.get(resultado["id"], [])
+
+            numerador = 0.0
+            denominador = 0.0
+
+            for rel in relaciones:
+                nota_indicador = notas_indicadores.get(rel["id_indicador"])
+                if nota_indicador is None:
+                    continue
+
+                peso_indicador = float(rel["peso"])
+                numerador += nota_indicador * peso_indicador
+                denominador += peso_indicador
+
+            nota_resultado = None
+            if denominador > 0:
+                nota_resultado = numerador / denominador
+                peso_resultado = float(resultado["peso"])
+                suma_ponderada_final += nota_resultado * peso_resultado
+                suma_pesos_final += peso_resultado
+
+            resultados_notas_map[resultado["id"]] = nota_resultado
+
+        nota_final = None
+        if suma_pesos_final > 0:
+            nota_final = suma_ponderada_final / suma_pesos_final
+
+        resultados_list = []
+        for res_id in sorted(resultados_map, key=lambda x: resultados_map[x]["codigo"]):
+            res_data = resultados_map[res_id]
+
+            actividades_ordenadas = sorted(
+                res_data["actividades"].values(),
+                key=lambda a: (a["fecha"] or "", a["codigo"])
+            )
+
+            actividades_list = []
+            for act_data in actividades_ordenadas:
+                numerador = 0.0
+                denominador = 0.0
+                for item in act_data["items"]:
+                    if item["nota"] is not None:
+                        numerador += item["nota"] * item["peso"]
+                        denominador += item["peso"]
+
+                calificacion = numerador / denominador if denominador > 0 else None
+
+                actividades_list.append({
+                    "id": act_data["id"],
+                    "codigo": act_data["codigo"],
+                    "nombre": act_data["nombre"],
+                    "fecha": act_data["fecha"],
+                    "tipo_calificacion": act_data["tipo_calificacion"],
+                    "peso": act_data["peso"],
+                    "calificacion": calificacion,
+                })
+
+            resultados_list.append({
+                "id": res_data["id"],
+                "codigo": res_data["codigo"],
+                "nombre": res_data["nombre"],
+                "nota": resultados_notas_map.get(res_id),
+                "actividades": actividades_list,
+            })
+
+        return {
+            "modulo": modulo,
+            "fecha_informe": fecha_informe,
+            "estudiante": dict(alumno),
+            "nota_final": nota_final,
+            "resultados": resultados_list,
+        }
+
+
 def get_informe_grupo(modulo: str, fecha_informe: str | None = None) -> dict:
     with get_connection(modulo) as conn:
         alumnos = [

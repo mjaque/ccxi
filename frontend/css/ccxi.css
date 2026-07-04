@@ -44,6 +44,10 @@ td button {
 	margin: 0px 0.5rem;
 }
 
+td:has(button) {
+	white-space: nowrap;
+}
+
 /* Clases generales */
 p.mensaje {
 	min-height: 1.3rem;
