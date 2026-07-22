@@ -1,4 +1,4 @@
-import math
+import statistics
 from collections import defaultdict
 from db import get_connection
 
@@ -20,6 +20,24 @@ def _clamp_nota_indicador(valor: float) -> float:
     if valor > 10:
         return 10.0
     return valor
+
+
+def _calcular_cuartiles(valores: list[float]) -> dict[str, float | None]:
+    validos = sorted([v for v in valores if v is not None])
+    if not validos:
+        return {"q1": None, "q2": None, "q3": None}
+    if len(validos) == 1:
+        return {"q1": validos[0], "q2": validos[0], "q3": validos[0]}
+    n = len(validos)
+    q2 = statistics.median(validos)
+    lower = validos[:n // 2]
+    if n % 2 == 0:
+        upper = validos[n // 2:]
+    else:
+        upper = validos[n // 2 + 1:]
+    q1 = statistics.median(lower)
+    q3 = statistics.median(upper)
+    return {"q1": q1, "q2": q2, "q3": q3}
 
 
 def _calcular_notas_indicadores(rows: list[dict]) -> dict[int, float]:
@@ -80,7 +98,7 @@ def _get_resultados_y_relaciones(conn) -> tuple[list[dict], dict[int, list[dict]
     return resultados, indicadores_por_resultado
 
 
-def _calcular_resultados_alumno(conn, alumno_id: int, fecha_informe: str | None) -> dict[int, float]:
+def _calcular_notas_alumno(conn, alumno_id: int, fecha_informe: str | None) -> dict:
     resultados, indicadores_por_resultado = _get_resultados_y_relaciones(conn)
     filtro_fecha, params_fecha = _build_fecha_filter("a", fecha_informe)
 
@@ -97,10 +115,13 @@ def _calcular_resultados_alumno(conn, alumno_id: int, fecha_informe: str | None)
               AND {filtro_fecha}
             ORDER BY a.fecha ASC, c.id_actividad ASC, c.id_indicador ASC
         """, (alumno_id, *params_fecha)).fetchall()
-        ]
+    ]
 
     notas_indicadores = _calcular_notas_indicadores(rows_calculo)
-    notas_resultado: dict[int, float] = {}
+
+    resultados_info = []
+    suma_ponderada_final = 0.0
+    suma_pesos_final = 0.0
 
     for resultado in resultados:
         relaciones = indicadores_por_resultado.get(resultado["id"], [])
@@ -117,10 +138,46 @@ def _calcular_resultados_alumno(conn, alumno_id: int, fecha_informe: str | None)
             numerador += nota_indicador * peso_indicador
             denominador += peso_indicador
 
+        nota_resultado = None
         if denominador > 0:
-            notas_resultado[resultado["id"]] = numerador / denominador
+            nota_resultado = numerador / denominador
+            peso_resultado = float(resultado["peso"])
+            suma_ponderada_final += nota_resultado * peso_resultado
+            suma_pesos_final += peso_resultado
 
-    return notas_resultado
+        indicadores_info = []
+        for rel in relaciones:
+            indicadores_info.append({
+                "id_indicador": rel["id_indicador"],
+                "codigo": rel["indicador_codigo"],
+                "nombre": rel["indicador_nombre"],
+                "peso": rel["peso"],
+                "nota": notas_indicadores.get(rel["id_indicador"]),
+            })
+
+        resultados_info.append({
+            "id": resultado["id"],
+            "codigo": resultado["codigo"],
+            "nombre": resultado["nombre"],
+            "peso": resultado["peso"],
+            "nota": nota_resultado,
+            "indicadores": indicadores_info,
+        })
+
+    nota_final = None
+    if suma_pesos_final > 0:
+        nota_final = suma_ponderada_final / suma_pesos_final
+
+    return {
+        "notas_indicadores": notas_indicadores,
+        "notas_resultados": {r["id"]: r["nota"] for r in resultados_info},
+        "nota_final": nota_final,
+        "resultados_info": resultados_info,
+    }
+
+
+def _calcular_resultados_alumno(conn, alumno_id: int, fecha_informe: str | None) -> dict[int, float]:
+    return _calcular_notas_alumno(conn, alumno_id, fecha_informe)["notas_resultados"]
 
 
 def get_informe_alumnado(modulo: str, alumno_id: int, fecha_informe: str | None = None) -> dict:
@@ -134,75 +191,11 @@ def get_informe_alumnado(modulo: str, alumno_id: int, fecha_informe: str | None 
         if alumno is None:
             raise ValueError("El alumno seleccionado no existe")
 
-        resultados, indicadores_por_resultado = _get_resultados_y_relaciones(conn)
-
         filtro_fecha, params_fecha = _build_fecha_filter("a", fecha_informe)
 
-        rows_calculo = [
-            dict(row) for row in conn.execute(f"""
-                SELECT
-                    c.id_indicador,
-                    c.nivel_logro,
-                    c.incremento,
-                    a.fecha
-                FROM "Calificacion" c
-                JOIN "Actividad" a ON a.id = c.id_actividad
-                WHERE c.id_estudiante = ?
-                  AND {filtro_fecha}
-                ORDER BY a.fecha ASC, c.id_actividad ASC, c.id_indicador ASC
-            """, (alumno_id, *params_fecha)).fetchall()
-        ]
-
-        notas_indicadores = _calcular_notas_indicadores(rows_calculo)
-
-        resultados_informe = []
-        suma_ponderada_final = 0.0
-        suma_pesos_final = 0.0
-
-        for resultado in resultados:
-            relaciones = indicadores_por_resultado.get(resultado["id"], [])
-
-            numerador = 0.0
-            denominador = 0.0
-
-            for rel in relaciones:
-                nota_indicador = notas_indicadores.get(rel["id_indicador"])
-                if nota_indicador is None:
-                    continue
-
-                peso_indicador = float(rel["peso"])
-                numerador += nota_indicador * peso_indicador
-                denominador += peso_indicador
-
-            nota_resultado = None
-            if denominador > 0:
-                nota_resultado = numerador / denominador
-                peso_resultado = float(resultado["peso"])
-                suma_ponderada_final += nota_resultado * peso_resultado
-                suma_pesos_final += peso_resultado
-
-            indicadores_informe = []
-            for rel in relaciones:
-                indicadores_informe.append({
-                    "id_indicador": rel["id_indicador"],
-                    "codigo": rel["indicador_codigo"],
-                    "nombre": rel["indicador_nombre"],
-                    "peso": rel["peso"],
-                    "nota": notas_indicadores.get(rel["id_indicador"]),
-                })
-
-            resultados_informe.append({
-                "id": resultado["id"],
-                "codigo": resultado["codigo"],
-                "nombre": resultado["nombre"],
-                "peso": resultado["peso"],
-                "nota": nota_resultado,
-                "indicadores": indicadores_informe,
-            })
-
-        nota_final = None
-        if suma_pesos_final > 0:
-            nota_final = suma_ponderada_final / suma_pesos_final
+        datos_alumno = _calcular_notas_alumno(conn, alumno_id, fecha_informe)
+        resultados_informe = datos_alumno["resultados_info"]
+        nota_final = datos_alumno["nota_final"]
 
         detalles = [
             dict(row) for row in conn.execute(f"""
@@ -347,56 +340,9 @@ def get_informe_actividades_por_resultados(
                 "nota": nota,
             })
 
-        resultados_notas, indicadores_por_resultado = _get_resultados_y_relaciones(conn)
-
-        rows_calculo = [
-            dict(row) for row in conn.execute(f"""
-                SELECT
-                    c.id_indicador,
-                    c.nivel_logro,
-                    c.incremento,
-                    a.fecha
-                FROM "Calificacion" c
-                JOIN "Actividad" a ON a.id = c.id_actividad
-                WHERE c.id_estudiante = ?
-                  AND {filtro_fecha}
-                ORDER BY a.fecha ASC, c.id_actividad ASC, c.id_indicador ASC
-            """, (alumno_id, *params_fecha)).fetchall()
-        ]
-
-        notas_indicadores = _calcular_notas_indicadores(rows_calculo)
-
-        resultados_notas_map = {}
-        suma_ponderada_final = 0.0
-        suma_pesos_final = 0.0
-
-        for resultado in resultados_notas:
-            relaciones = indicadores_por_resultado.get(resultado["id"], [])
-
-            numerador = 0.0
-            denominador = 0.0
-
-            for rel in relaciones:
-                nota_indicador = notas_indicadores.get(rel["id_indicador"])
-                if nota_indicador is None:
-                    continue
-
-                peso_indicador = float(rel["peso"])
-                numerador += nota_indicador * peso_indicador
-                denominador += peso_indicador
-
-            nota_resultado = None
-            if denominador > 0:
-                nota_resultado = numerador / denominador
-                peso_resultado = float(resultado["peso"])
-                suma_ponderada_final += nota_resultado * peso_resultado
-                suma_pesos_final += peso_resultado
-
-            resultados_notas_map[resultado["id"]] = nota_resultado
-
-        nota_final = None
-        if suma_pesos_final > 0:
-            nota_final = suma_ponderada_final / suma_pesos_final
+        datos_alumno = _calcular_notas_alumno(conn, alumno_id, fecha_informe)
+        resultados_notas_map = datos_alumno["notas_resultados"]
+        nota_final = datos_alumno["nota_final"]
 
         resultados_list = []
         for res_id in sorted(resultados_map, key=lambda x: resultados_map[x]["codigo"]):
@@ -455,39 +401,64 @@ def get_informe_grupo(modulo: str, fecha_informe: str | None = None) -> dict:
             """).fetchall()
         ]
 
-        resultados, _ = _get_resultados_y_relaciones(conn)
+        if not alumnos:
+            return {
+                "modulo": modulo,
+                "fecha_informe": fecha_informe,
+                "numero_estudiantes": 0,
+                "nota_final": None,
+                "resultados": [],
+            }
 
+        resultados_metadata, indicadores_por_resultado = _get_resultados_y_relaciones(conn)
+
+        notas_finales: list[float] = []
         notas_por_resultado: dict[int, list[float]] = defaultdict(list)
+        notas_por_indicador: dict[int, list[float]] = defaultdict(list)
 
         for alumno in alumnos:
-            notas_resultado_alumno = _calcular_resultados_alumno(conn, alumno["id"], fecha_informe)
+            datos = _calcular_notas_alumno(conn, alumno["id"], fecha_informe)
 
-            for id_resultado, nota in notas_resultado_alumno.items():
-                notas_por_resultado[id_resultado].append(nota)
+            if datos["nota_final"] is not None:
+                notas_finales.append(datos["nota_final"])
+
+            for id_res, nota in datos["notas_resultados"].items():
+                if nota is not None:
+                    notas_por_resultado[id_res].append(nota)
+
+            for id_ind, nota in datos["notas_indicadores"].items():
+                notas_por_indicador[id_ind].append(nota)
 
         resultados_informe = []
 
-        for resultado in resultados:
-            notas = notas_por_resultado.get(resultado["id"], [])
+        for resultado in resultados_metadata:
+            relaciones = indicadores_por_resultado.get(resultado["id"], [])
 
-            if notas:
-                media = sum(notas) / len(notas)
-                varianza = sum((nota - media) ** 2 for nota in notas) / len(notas)
-                desviacion_tipica = math.sqrt(varianza)
-            else:
-                media = None
-                desviacion_tipica = None
+            indicadores_informe = []
+            for rel in relaciones:
+                notas_ind = notas_por_indicador.get(rel["id_indicador"], [])
+                indicadores_informe.append({
+                    "id_indicador": rel["id_indicador"],
+                    "codigo": rel["indicador_codigo"],
+                    "nombre": rel["indicador_nombre"],
+                    "peso": rel["peso"],
+                    "nota": _calcular_cuartiles(notas_ind),
+                })
 
+            notas_res = notas_por_resultado.get(resultado["id"], [])
             resultados_informe.append({
                 "id": resultado["id"],
                 "codigo": resultado["codigo"],
                 "nombre": resultado["nombre"],
-                "media": media,
-                "desviacion_tipica": desviacion_tipica,
+                "peso": resultado["peso"],
+                "nota": _calcular_cuartiles(notas_res),
+                "indicadores": indicadores_informe,
             })
 
         return {
             "modulo": modulo,
             "fecha_informe": fecha_informe,
+            "numero_estudiantes": len(alumnos),
+            "nota_final": _calcular_cuartiles(notas_finales),
             "resultados": resultados_informe,
         }
