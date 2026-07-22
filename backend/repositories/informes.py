@@ -257,6 +257,92 @@ def get_informe_alumnado(modulo: str, alumno_id: int, fecha_informe: str | None 
         }
 
 
+def _calcular_actividades_por_resultado(conn, alumno_id: int, fecha_informe: str | None) -> dict[int, dict]:
+    filtro_fecha, params_fecha = _build_fecha_filter("a", fecha_informe)
+
+    rows = [
+        dict(row) for row in conn.execute(f"""
+            SELECT
+                r.id AS resultado_id,
+                r.codigo AS resultado_codigo,
+                r.nombre AS resultado_nombre,
+                a.id AS actividad_id,
+                a.codigo AS actividad_codigo,
+                a.nombre AS actividad_nombre,
+                a.fecha AS actividad_fecha,
+                i.id AS indicador_id,
+                ir.peso AS ir_peso,
+                ia.tipo_calificacion,
+                ia.peso AS ia_peso,
+                c.nivel_logro,
+                c.incremento
+            FROM "Resultado" r
+            JOIN "Indicador_Resultado" ir ON ir.id_resultado = r.id
+            JOIN "Indicador" i ON i.id = ir.id_indicador
+            JOIN "Indicador_Actividad" ia ON ia.id_indicador = i.id
+            JOIN "Actividad" a ON a.id = ia.id_actividad
+            LEFT JOIN "Calificacion" c
+                ON c.id_actividad = a.id
+                AND c.id_indicador = i.id
+                AND c.id_estudiante = ?
+            WHERE {filtro_fecha}
+            ORDER BY r.codigo COLLATE NOCASE ASC,
+                a.fecha ASC,
+                a.codigo COLLATE NOCASE ASC,
+                i.codigo COLLATE NOCASE ASC
+        """, (alumno_id, *params_fecha)).fetchall()
+    ]
+
+    resultados_map: dict[int, dict] = {}
+    for row in rows:
+        res_id = row["resultado_id"]
+        if res_id not in resultados_map:
+            resultados_map[res_id] = {
+                "id": res_id,
+                "codigo": row["resultado_codigo"],
+                "nombre": row["resultado_nombre"],
+                "actividades": {},
+            }
+
+        act_id = row["actividad_id"]
+        if act_id not in resultados_map[res_id]["actividades"]:
+            resultados_map[res_id]["actividades"][act_id] = {
+                "id": act_id,
+                "codigo": row["actividad_codigo"],
+                "nombre": row["actividad_nombre"],
+                "fecha": row["actividad_fecha"],
+                "tipo_calificacion": row["tipo_calificacion"],
+                "peso": row["ia_peso"],
+                "items": [],
+            }
+
+        nivel = row["nivel_logro"]
+        nota = None
+        if nivel is not None:
+            nota = _clamp_nota_indicador(
+                float(nivel) + float(row["incremento"] or 0)
+            )
+
+        resultados_map[res_id]["actividades"][act_id]["items"].append({
+            "peso": row["ir_peso"],
+            "nota": nota,
+        })
+
+    for res_data in resultados_map.values():
+        for act_data in res_data["actividades"].values():
+            numerador = 0.0
+            denominador = 0.0
+            for item in act_data["items"]:
+                if item["nota"] is not None:
+                    numerador += item["nota"] * item["peso"]
+                    denominador += item["peso"]
+
+            act_data["calificacion"] = numerador / denominador if denominador > 0 else None
+            del act_data["items"]
+
+    return resultados_map
+
+
 def get_informe_actividades_por_resultados(
     modulo: str, alumno_id: int, fecha_informe: str | None = None
 ) -> dict:
@@ -270,75 +356,7 @@ def get_informe_actividades_por_resultados(
         if alumno is None:
             raise ValueError("El alumno seleccionado no existe")
 
-        filtro_fecha, params_fecha = _build_fecha_filter("a", fecha_informe)
-
-        rows = [
-            dict(row) for row in conn.execute(f"""
-                SELECT
-                    r.id AS resultado_id,
-                    r.codigo AS resultado_codigo,
-                    r.nombre AS resultado_nombre,
-                    a.id AS actividad_id,
-                    a.codigo AS actividad_codigo,
-                    a.nombre AS actividad_nombre,
-                    a.fecha AS actividad_fecha,
-                    i.id AS indicador_id,
-                    ir.peso AS ir_peso,
-                    ia.tipo_calificacion,
-                    ia.peso AS ia_peso,
-                    c.nivel_logro,
-                    c.incremento
-                FROM "Resultado" r
-                JOIN "Indicador_Resultado" ir ON ir.id_resultado = r.id
-                JOIN "Indicador" i ON i.id = ir.id_indicador
-                JOIN "Indicador_Actividad" ia ON ia.id_indicador = i.id
-                JOIN "Actividad" a ON a.id = ia.id_actividad
-                LEFT JOIN "Calificacion" c
-                    ON c.id_actividad = a.id
-                    AND c.id_indicador = i.id
-                    AND c.id_estudiante = ?
-                WHERE {filtro_fecha}
-                ORDER BY r.codigo COLLATE NOCASE ASC,
-                    a.fecha ASC,
-                    a.codigo COLLATE NOCASE ASC,
-                    i.codigo COLLATE NOCASE ASC
-            """, (alumno_id, *params_fecha)).fetchall()
-        ]
-
-        resultados_map: dict[int, dict] = {}
-        for row in rows:
-            res_id = row["resultado_id"]
-            if res_id not in resultados_map:
-                resultados_map[res_id] = {
-                    "id": res_id,
-                    "codigo": row["resultado_codigo"],
-                    "nombre": row["resultado_nombre"],
-                    "actividades": {},
-                }
-
-            act_id = row["actividad_id"]
-            if act_id not in resultados_map[res_id]["actividades"]:
-                resultados_map[res_id]["actividades"][act_id] = {
-                    "id": act_id,
-                    "codigo": row["actividad_codigo"],
-                    "nombre": row["actividad_nombre"],
-                    "fecha": row["actividad_fecha"],
-                    "tipo_calificacion": row["tipo_calificacion"],
-                    "peso": row["ia_peso"],
-                    "items": [],
-                }
-
-            nivel = row["nivel_logro"]
-            nota = None
-            if nivel is not None:
-                nota = _clamp_nota_indicador(
-                    float(nivel) + float(row["incremento"] or 0)
-                )
-
-            resultados_map[res_id]["actividades"][act_id]["items"].append({
-                "peso": row["ir_peso"],
-                "nota": nota,
-            })
+        resultados_map = _calcular_actividades_por_resultado(conn, alumno_id, fecha_informe)
 
         datos_alumno = _calcular_notas_alumno(conn, alumno_id, fecha_informe)
         resultados_notas_map = datos_alumno["notas_resultados"]
@@ -353,33 +371,12 @@ def get_informe_actividades_por_resultados(
                 key=lambda a: (a["fecha"] or "", a["codigo"])
             )
 
-            actividades_list = []
-            for act_data in actividades_ordenadas:
-                numerador = 0.0
-                denominador = 0.0
-                for item in act_data["items"]:
-                    if item["nota"] is not None:
-                        numerador += item["nota"] * item["peso"]
-                        denominador += item["peso"]
-
-                calificacion = numerador / denominador if denominador > 0 else None
-
-                actividades_list.append({
-                    "id": act_data["id"],
-                    "codigo": act_data["codigo"],
-                    "nombre": act_data["nombre"],
-                    "fecha": act_data["fecha"],
-                    "tipo_calificacion": act_data["tipo_calificacion"],
-                    "peso": act_data["peso"],
-                    "calificacion": calificacion,
-                })
-
             resultados_list.append({
                 "id": res_data["id"],
                 "codigo": res_data["codigo"],
                 "nombre": res_data["nombre"],
                 "nota": resultados_notas_map.get(res_id),
-                "actividades": actividades_list,
+                "actividades": actividades_ordenadas,
             })
 
         return {
@@ -461,4 +458,101 @@ def get_informe_grupo(modulo: str, fecha_informe: str | None = None) -> dict:
             "numero_estudiantes": len(alumnos),
             "nota_final": _calcular_cuartiles(notas_finales),
             "resultados": resultados_informe,
+        }
+
+
+def get_informe_actividades_por_resultados_grupo(
+    modulo: str, fecha_informe: str | None = None
+) -> dict:
+    with get_connection(modulo) as conn:
+        alumnos = [
+            dict(row) for row in conn.execute("""
+                SELECT id, nombre
+                FROM Estudiante
+                ORDER BY nombre COLLATE NOCASE ASC
+            """).fetchall()
+        ]
+
+        if not alumnos:
+            return {
+                "modulo": modulo,
+                "fecha_informe": fecha_informe,
+                "numero_estudiantes": 0,
+                "nota_final": None,
+                "resultados": [],
+            }
+
+        notas_finales: list[float] = []
+        notas_por_resultado: dict[int, list[float]] = defaultdict(list)
+        calificaciones_por_actividad: dict[tuple[int, int], list[float]] = defaultdict(list)
+        metadata: dict[int, dict] = {}
+
+        for alumno in alumnos:
+            datos = _calcular_notas_alumno(conn, alumno["id"], fecha_informe)
+            act_map = _calcular_actividades_por_resultado(conn, alumno["id"], fecha_informe)
+
+            if datos["nota_final"] is not None:
+                notas_finales.append(datos["nota_final"])
+
+            for id_res, nota in datos["notas_resultados"].items():
+                if nota is not None:
+                    notas_por_resultado[id_res].append(nota)
+
+            for res_id, res_data in act_map.items():
+                if res_id not in metadata:
+                    metadata[res_id] = {
+                        "id": res_id,
+                        "codigo": res_data["codigo"],
+                        "nombre": res_data["nombre"],
+                        "actividades": {},
+                    }
+                for act_id, act_data in res_data["actividades"].items():
+                    if act_id not in metadata[res_id]["actividades"]:
+                        metadata[res_id]["actividades"][act_id] = {
+                            "id": act_id,
+                            "codigo": act_data["codigo"],
+                            "nombre": act_data["nombre"],
+                            "fecha": act_data["fecha"],
+                            "tipo_calificacion": act_data["tipo_calificacion"],
+                            "peso": act_data["peso"],
+                        }
+                    if act_data["calificacion"] is not None:
+                        calificaciones_por_actividad[(res_id, act_id)].append(act_data["calificacion"])
+
+        resultados_list = []
+        for res_id in sorted(metadata, key=lambda x: metadata[x]["codigo"]):
+            res_data = metadata[res_id]
+
+            notas_res = notas_por_resultado.get(res_id, [])
+            actividades_list = []
+            for act_id in sorted(
+                res_data["actividades"],
+                key=lambda a: (res_data["actividades"][a]["fecha"] or "", res_data["actividades"][a]["codigo"])
+            ):
+                act_data = res_data["actividades"][act_id]
+                califs = calificaciones_por_actividad.get((res_id, act_id), [])
+                actividades_list.append({
+                    "id": act_data["id"],
+                    "codigo": act_data["codigo"],
+                    "nombre": act_data["nombre"],
+                    "fecha": act_data["fecha"],
+                    "tipo_calificacion": act_data["tipo_calificacion"],
+                    "peso": act_data["peso"],
+                    "calificacion": _calcular_cuartiles(califs),
+                })
+
+            resultados_list.append({
+                "id": res_data["id"],
+                "codigo": res_data["codigo"],
+                "nombre": res_data["nombre"],
+                "nota": _calcular_cuartiles(notas_res),
+                "actividades": actividades_list,
+            })
+
+        return {
+            "modulo": modulo,
+            "fecha_informe": fecha_informe,
+            "numero_estudiantes": len(alumnos),
+            "nota_final": _calcular_cuartiles(notas_finales),
+            "resultados": resultados_list,
         }

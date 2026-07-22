@@ -24,7 +24,7 @@ Permite gestionar módulos, estudiantes, resultados de aprendizaje, indicadores 
 - Cálculo automático de nota actual por indicador
 - Informe detallado de estudiante
 - Informe de actividades agrupadas por resultados de aprendizaje
-- Informe estadístico de grupo (media y desviación típica por resultado) (PENDIENTE)
+- Informes estadísticos de grupo 
 
 ## Arquitectura
 

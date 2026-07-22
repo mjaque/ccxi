@@ -41,6 +41,7 @@ from repositories.calificaciones import (
 from repositories.informes import (
     get_informe_alumnado,
     get_informe_actividades_por_resultados,
+    get_informe_actividades_por_resultados_grupo,
     get_informe_grupo,
 )
 
@@ -273,6 +274,32 @@ class CCXIHandler(SimpleHTTPRequestHandler):
                     return
 
             informe = get_informe_grupo(modulo, fecha_informe)
+
+            self._send_json({
+                "ok": True,
+                "item": informe
+            })
+            return
+
+        if path == "/api/informes/actividades-por-resultados-grupo":
+            modulo = self._get_modulo()
+            if modulo is None:
+                return
+
+            params = parse_qs(parsed.query)
+            fecha_informe = (params.get("fecha_informe", [""])[0] or "").strip() or None
+
+            if fecha_informe:
+                try:
+                    date.fromisoformat(fecha_informe)
+                except ValueError:
+                    self._send_json({
+                        "ok": False,
+                        "error": "La fecha del informe no es válida"
+                    }, status=400)
+                    return
+
+            informe = get_informe_actividades_por_resultados_grupo(modulo, fecha_informe)
 
             self._send_json({
                 "ok": True,
