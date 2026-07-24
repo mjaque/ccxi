@@ -97,7 +97,7 @@ ccxi/
 ### Base de datos
 - Una base de datos `.sqlite` por módulo (curso/asignatura)
 - Tablas: `Metadatos`, `Estudiante`, `Resultado`, `Indicador`, `Actividad`, `Indicador_Resultado`, `Indicador_Actividad`, `Calificacion`
-- Niveles de logro permitidos: `0, 1, 3, 7, 10`
+- Niveles de logro permitidos: `0` a `10`
 
 ## API REST
 

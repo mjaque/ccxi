@@ -24,7 +24,8 @@ Permite gestionar módulos, estudiantes, resultados de aprendizaje, indicadores 
 - Cálculo automático de nota actual por indicador
 - Informe detallado de estudiante
 - Informe de actividades agrupadas por resultados de aprendizaje
-- Informes estadísticos de grupo 
+- Informes de grupo con cuartiles (Q1, Q2, Q3) por resultados e indicadores
+- Informe de grupo de actividades por resultados con cuartiles (Q1, Q2, Q3) 
 
 ## Arquitectura
 
@@ -138,7 +139,8 @@ ccxi/
 | DELETE | `/api/calificaciones` | Borrar calificación |
 | GET | `/api/informes/estudiantes` | Informe de estudiante |
 | GET | `/api/informes/actividades-por-resultados` | Informe por resultados |
-| GET | `/api/informes/grupo` | Informe de grupo |
+| GET | `/api/informes/grupo` | Informe de grupo con cuartiles |
+| GET | `/api/informes/actividades-por-resultados-grupo` | Informe de grupo por actividades con cuartiles |
 
 ## Patrones de diseño
 
