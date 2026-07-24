@@ -154,6 +154,18 @@ svg.icono-lupa {
 	color: #888;
 }
 
+a.icono-info {
+	text-decoration: none;
+	color: #888;
+	margin-left: 6px;
+	vertical-align: middle;
+	display: inline-flex;
+	align-items: center;
+}
+a.icono-info:hover {
+	color: #1a3a5c;
+}
+
 #calificaciones-add-foot td {
 	position: relative;
 }
