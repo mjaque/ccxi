@@ -141,6 +141,7 @@ ccxi/
 | GET | `/api/informes/actividades-por-resultados` | Informe por resultados |
 | GET | `/api/informes/grupo` | Informe de grupo con cuartiles |
 | GET | `/api/informes/actividades-por-resultados-grupo` | Informe de grupo por actividades con cuartiles |
+| GET | `/api/informes/indicadores` | Listado de indicadores agrupados por resultado |
 
 ## Patrones de diseño
 

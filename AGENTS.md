@@ -128,6 +128,7 @@ ccxi/
 | DELETE | `/api/calificaciones?actividad_id=&estudiante_id=` | Borrar calificación |
 | GET | `/api/informes/estudiantes?estudiante_id=&fecha_informe=` | Informe de estudiante |
 | GET | `/api/informes/grupo?fecha_informe=` | Informe de grupo |
+| GET | `/api/informes/indicadores` | Listado de indicadores agrupados por resultado |
 
 ## Comandos
 

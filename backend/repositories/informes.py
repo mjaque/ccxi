@@ -98,6 +98,36 @@ def _get_resultados_y_relaciones(conn) -> tuple[list[dict], dict[int, list[dict]
     return resultados, indicadores_por_resultado
 
 
+def get_listado_indicadores(modulo: str) -> dict:
+    """Devuelve los indicadores agrupados por resultado de aprendizaje."""
+    with get_connection(modulo) as conn:
+        resultados, indicadores_por_resultado = _get_resultados_y_relaciones(conn)
+
+        resultados_informe = []
+        for resultado in resultados:
+            indicadores = [
+                {
+                    "id": relacion["id_indicador"],
+                    "codigo": relacion["indicador_codigo"],
+                    "nombre": relacion["indicador_nombre"],
+                    "peso": relacion["peso"],
+                }
+                for relacion in indicadores_por_resultado.get(resultado["id"], [])
+            ]
+            resultados_informe.append({
+                "id": resultado["id"],
+                "codigo": resultado["codigo"],
+                "nombre": resultado["nombre"],
+                "peso": resultado["peso"],
+                "indicadores": indicadores,
+            })
+
+        return {
+            "modulo": modulo,
+            "resultados": resultados_informe,
+        }
+
+
 def _calcular_notas_alumno(conn, alumno_id: int, fecha_informe: str | None) -> dict:
     resultados, indicadores_por_resultado = _get_resultados_y_relaciones(conn)
     filtro_fecha, params_fecha = _build_fecha_filter("a", fecha_informe)

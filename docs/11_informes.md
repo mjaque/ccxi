@@ -95,3 +95,12 @@ Al seleccionar otro módulo en el panel superior, los selectores de estudiante s
 - Los informes están diseñados para **imprimirse** directamente desde el navegador (incluyen estilos específicos para impresión)
 - El sistema de calificación utilizado en los informes se explica en detalle en el [Sistema de Calificación](10_calificaciones.md)
 - Para informes parciales por evaluaciones, usa la **fecha de corte**
+
+## 11.10 Listado de Indicadores de Logro
+
+El último bloque de la vista de informes genera un listado de indicadores agrupado por resultado de aprendizaje. No requiere seleccionar estudiante ni indicar una fecha.
+
+El informe muestra el nombre del módulo y, para cada resultado:
+
+- Código, nombre y peso del resultado de aprendizaje
+- Código, nombre y peso de cada indicador asociado en ese resultado

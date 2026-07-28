@@ -43,6 +43,7 @@ from repositories.informes import (
     get_informe_actividades_por_resultados,
     get_informe_actividades_por_resultados_grupo,
     get_informe_grupo,
+    get_listado_indicadores,
 )
 
 
@@ -278,6 +279,17 @@ class CCXIHandler(SimpleHTTPRequestHandler):
             self._send_json({
                 "ok": True,
                 "item": informe
+            })
+            return
+
+        if path == "/api/informes/indicadores":
+            modulo = self._get_modulo()
+            if modulo is None:
+                return
+
+            self._send_json({
+                "ok": True,
+                "item": get_listado_indicadores(modulo),
             })
             return
 

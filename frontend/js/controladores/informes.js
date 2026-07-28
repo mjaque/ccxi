@@ -21,6 +21,9 @@ export class ControladorInformes extends Controlador{
 	#botonGenerarARG
 	#pMensajeARG
 
+	#botonGenerarListado
+	#pMensajeListado
+
 	#cacheEstudiantes = []
 
 	constructor(div) {
@@ -48,6 +51,83 @@ export class ControladorInformes extends Controlador{
 			this.#cacheEstudiantes = []
 		}
 		this.#rellenarSelectEstudiantes()
+	}
+
+	async #generarListadoIndicadores() {
+		try {
+			const data = await this.api.getListadoIndicadores()
+			this.#abrirListadoIndicadores(data.item)
+		} catch (error) {
+			this.#pMensajeListado.textContent = error.message
+			this.#pMensajeListado.setAttribute('class', 'error')
+		}
+	}
+
+	#abrirListadoIndicadores(informe) {
+		const ventana = window.open('', '_blank')
+		if (!ventana) {
+			this.#pMensajeListado.textContent = 'No se pudo abrir la nueva pestaña. Permite ventanas emergentes.'
+			this.#pMensajeListado.setAttribute('class', 'error')
+			return
+		}
+
+		const resultadosHtml = informe.resultados.map(resultado => {
+			const indicadoresHtml = (resultado.indicadores || []).map(indicador => `
+				<tr>
+					<td>${this.#escaparHtml(indicador.codigo)}</td>
+					<td>${this.#escaparHtml(indicador.nombre)}</td>
+					<td class=centro>${indicador.peso}</td>
+				</tr>`).join('')
+
+			return `<section class=resultado>
+				<h2>${this.#escaparHtml(resultado.codigo)}: ${this.#escaparHtml(resultado.nombre)} <span class=peso>(peso: ${resultado.peso})</span></h2>
+				<table>
+					<thead><tr><th>Código</th><th>Nombre</th><th>Peso en el RA</th></tr></thead>
+					<tbody>${indicadoresHtml || '<tr><td colspan=3 class=vacio>No hay indicadores asociados</td></tr>'}</tbody>
+				</table>
+			</section>`
+		}).join('')
+
+		const contenido = informe.resultados.length > 0
+			? resultadosHtml
+			: '<p class=vacio>No hay resultados de aprendizaje en este módulo.</p>'
+
+		ventana.document.open()
+		ventana.document.write(`<!DOCTYPE html>
+<html lang=es>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width, initial-scale=1.0">
+<title>Listado de Indicadores de Logro</title>
+<style>
+	*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+	body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; background: #f5f5f5; padding: 20px; }
+	.report { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 40px; }
+	h1 { font-size: 22px; color: #1a3a5c; margin-bottom: 8px; padding-bottom: 12px; border-bottom: 3px solid #1a3a5c; }
+	.modulo { color: #555; margin-bottom: 28px; }
+	.resultado { margin-bottom: 24px; padding: 16px; background: #fafbfc; border: 1px solid #e0e4e8; border-radius: 6px; }
+	h2 { font-size: 16px; color: #1a3a5c; margin-bottom: 12px; }
+	.peso { font-weight: 400; color: #666; font-size: 13px; }
+	table { width: 100%; border-collapse: collapse; font-size: 13px; }
+	thead th { background: #1a3a5c; color: #fff; padding: 8px 12px; text-align: left; font-weight: 500; }
+	tbody td { padding: 8px 12px; border-bottom: 1px solid #e0e4e8; }
+	tbody tr:nth-child(even) { background: #f5f7f9; }
+	.centro { text-align: center; }
+	.vacio { color: #888; font-style: italic; padding: 20px; text-align: center; }
+	.footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e0e4e8; font-size: 12px; color: #888; text-align: center; }
+	@media print { body { background: #fff; padding: 0; } .report { box-shadow: none; padding: 20px; } .resultado { break-inside: avoid; } }
+</style>
+</head>
+<body>
+<main class=report>
+	<h1>Listado de Indicadores de Logro</h1>
+	<p class=modulo>Módulo: <strong>${this.#escaparHtml(informe.modulo)}</strong></p>
+	${contenido}
+	<div class=footer>Generado por CCxI — Calificador de Competencias por Indicadores</div>
+</main>
+</body>
+</html>`)
+		ventana.document.close()
 	}
 
 	#rellenarSelectEstudiantes() {
@@ -709,6 +789,9 @@ export class ControladorInformes extends Controlador{
 		this.#inputFechaARG = this.div.querySelector('#actividades-resultados-grupo-fecha')
 		this.#botonGenerarARG = this.div.querySelector('#actividades-resultados-grupo-generar')
 		this.#pMensajeARG = this.div.querySelector('#actividades-resultados-grupo-mensaje')
+
+		this.#botonGenerarListado = this.div.querySelector('#listado-indicadores-generar')
+		this.#pMensajeListado = this.div.querySelector('#listado-indicadores-mensaje')
 	}
 
 	#registrarEventos() {
@@ -716,5 +799,6 @@ export class ControladorInformes extends Controlador{
 		this.#botonGenerarAR.addEventListener('click', this.#generarInformeActividadesResultados.bind(this))
 		this.#botonGenerarGrupo.addEventListener('click', this.#generarInformeGrupo.bind(this))
 		this.#botonGenerarARG.addEventListener('click', this.#generarInformeActividadesResultadosGrupo.bind(this))
+		this.#botonGenerarListado.addEventListener('click', this.#generarListadoIndicadores.bind(this))
 	}
 }
