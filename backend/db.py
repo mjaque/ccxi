@@ -14,6 +14,7 @@ REQUIRED_TABLES = {
     "Indicador_Resultado",
     "Indicador_Actividad",
     "Calificacion",
+    "Evaluacion",
 }
 
 _INVALID_ALREADY_REPORTED = set()
@@ -54,6 +55,14 @@ def get_connection(modulo: str) -> sqlite3.Connection:
 
 
 def _migrar_modulo(conn: sqlite3.Connection) -> None:
+    row = conn.execute(
+        'SELECT valor FROM "Metadatos" WHERE clave = \'db_version\''
+    ).fetchone()
+    try:
+        version = int(row[0]) if row is not None else 0
+    except (TypeError, ValueError):
+        version = 0
+
     migraciones = [
         """ALTER TABLE "Indicador_Actividad"
            ADD COLUMN "tipo_calificacion" TEXT NOT NULL DEFAULT 'ponderada'
@@ -66,6 +75,25 @@ def _migrar_modulo(conn: sqlite3.Connection) -> None:
             conn.execute(sql)
         except sqlite3.OperationalError:
             pass
+
+    if version < 2:
+        conn.execute('''
+            CREATE TABLE IF NOT EXISTS "Evaluacion" (
+                "id_estudiante" INTEGER NOT NULL,
+                "id_actividad" INTEGER NOT NULL,
+                "evaluacion" TEXT,
+                FOREIGN KEY("id_estudiante") REFERENCES "Estudiante"("id")
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE,
+                FOREIGN KEY("id_actividad") REFERENCES "Actividad"("id")
+                    ON DELETE CASCADE
+                    ON UPDATE CASCADE,
+                PRIMARY KEY("id_estudiante", "id_actividad")
+            )
+        ''')
+        conn.execute('''
+            UPDATE "Metadatos" SET valor = '2' WHERE clave = 'db_version'
+        ''')
 
 
 def _validate_db_file(db_path: Path) -> tuple[bool, str]:
@@ -107,6 +135,16 @@ def list_valid_modulos() -> list[str]:
     valid_names = []
 
     for db_path in sorted(DATA_DIR.glob("*.sqlite"), key=lambda p: p.name.lower()):
+        try:
+            with sqlite3.connect(db_path) as conn:
+                conn.execute("PRAGMA foreign_keys = ON;")
+                _migrar_modulo(conn)
+        except sqlite3.DatabaseError as exc:
+            if db_path.name not in _INVALID_ALREADY_REPORTED:
+                print(f"ERROR: no se pudo migrar la base de datos '{db_path.name}': {exc}")
+                _INVALID_ALREADY_REPORTED.add(db_path.name)
+            continue
+
         ok, error = _validate_db_file(db_path)
 
         if ok:
@@ -139,4 +177,3 @@ def create_modulo(modulo: str) -> str:
         raise RuntimeError(f"No se pudo crear la base de datos: {error}")
 
     return modulo
-

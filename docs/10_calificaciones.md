@@ -28,9 +28,10 @@ Si un indicador **no está asociado** a la actividad, solo muestra la columna de
    - **Nivel de logro**: número entero entre 0 y 10
    - **Incremento**: valor decimal positivo o negativo (opcional)
 3. Para indicadores no asociados que aparezcan en la tabla (porque ya tenían calificación previa), solo puedes añadir un incremento
-4. Pulsa **Guardar calificaciones**
+4. Escribe, si lo deseas, una **Evaluación** en el área de texto situada encima del botón de guardado
+5. Pulsa **Guardar calificaciones**
 
-Al guardar se reemplazan todas las calificaciones de esa actividad y estudiante por los valores actuales.
+Al guardar se reemplazan todas las calificaciones de esa actividad y estudiante por los valores actuales. La **Evaluación** se guarda independientemente de las calificaciones.
 
 ## 10.4 Añadir indicadores extra
 
@@ -75,7 +76,15 @@ También puedes eliminar filas de indicadores extra pulsando el botón **Elimina
 
 Al seleccionar otro módulo en el panel superior, los selectores de actividad y estudiante se recargan automáticamente. También se actualizan al crear, editar o eliminar actividades o estudiantes.
 
-## 10.9 Observaciones
+## 10.9 Evaluación
+
+Este campo es opcional. Puede utilizarse para anotar la justificación de las calificaciones de la actividad y/o para registrar el feedback que se da al estudiante sobre su rendimiento (consejos para mejorar, apuntar los errores a corregir, etc.).
+
+El área de texto **Evaluación** permite añadir una valoración opcional para la pareja actividad-estudiante. Se conserva aunque no haya niveles de logro ni incrementos registrados y se reemplaza al volver a guardar.
+
+Para eliminarla, deja el área vacía y pulsa **Guardar calificaciones**.
+
+## 10.10 Consideraciones
 
 - El **nivel de logro** debe ser un número entero entre 0 y 10
 - El **incremento** puede ser cualquier número decimal, positivo o negativo

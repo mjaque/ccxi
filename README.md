@@ -74,7 +74,7 @@ Servidor HTTP nativo (`http.server.ThreadingHTTPServer`) con enrutamiento manual
 
 ### Base de datos
 
-Una base de datos SQLite por módulo en `data/`. Ocho tablas: `Metadatos`, `Estudiante`, `Resultado`, `Indicador`, `Actividad`, `Indicador_Resultado`, `Indicador_Actividad`, `Calificacion`. Claves foráneas con `ON DELETE CASCADE`.
+Una base de datos SQLite por módulo en `data/`. Nueve tablas: `Metadatos`, `Estudiante`, `Resultado`, `Indicador`, `Actividad`, `Indicador_Resultado`, `Indicador_Actividad`, `Calificacion` y `Evaluacion`. Claves foráneas con `ON DELETE CASCADE`.
 
 ## Estructura del proyecto
 

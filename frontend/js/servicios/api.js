@@ -151,10 +151,10 @@ export class API{
 		return this.#pedir(url)
 	}
 
-	async guardarCalificacion(actividadId, estudianteId, items) {
+	async guardarCalificacion(actividadId, estudianteId, items, evaluacion) {
 		return this.#pedir('/api/calificaciones', {
 			method: 'PUT',
-			body: JSON.stringify({ actividad_id: actividadId, estudiante_id: estudianteId, items })
+			body: JSON.stringify({ actividad_id: actividadId, estudiante_id: estudianteId, items, evaluacion })
 		})
 	}
 

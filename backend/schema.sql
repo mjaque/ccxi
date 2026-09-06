@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS "Metadatos" (
 	PRIMARY KEY("clave")
 );
 INSERT OR IGNORE INTO "Metadatos" VALUES ('app_name','ccxi');
-INSERT OR IGNORE INTO "Metadatos" VALUES ('db_version','1');
+INSERT OR IGNORE INTO "Metadatos" VALUES ('db_version','2');
 -- Resultados de Aprendizaje
 CREATE TABLE IF NOT EXISTS "Resultado" (
 	"id"	INTEGER,
@@ -73,6 +73,18 @@ CREATE TABLE IF NOT EXISTS "Calificacion" (
 		ON DELETE CASCADE
 		ON UPDATE CASCADE,
 	PRIMARY KEY("id_estudiante", "id_indicador", "id_actividad" )
+);
+CREATE TABLE IF NOT EXISTS "Evaluacion" (
+	"id_estudiante" INTEGER NOT NULL,
+	"id_actividad" INTEGER NOT NULL,
+	"evaluacion" TEXT,
+	FOREIGN KEY("id_estudiante") REFERENCES "Estudiante"("id")
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	FOREIGN KEY("id_actividad") REFERENCES "Actividad"("id")
+		ON DELETE CASCADE
+		ON UPDATE CASCADE,
+	PRIMARY KEY("id_estudiante", "id_actividad")
 );
 CREATE TABLE IF NOT EXISTS "Indicador_Actividad" (
 	"id_indicador"	INTEGER NOT NULL,

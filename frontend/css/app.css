@@ -33,6 +33,15 @@ body {
   font-size: 14px;
 }
 
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  font: inherit;
+  resize: vertical;
+  margin: 8px 0 16px;
+}
+
 .acciones-formulario {
   display: flex;
   gap: 8px;

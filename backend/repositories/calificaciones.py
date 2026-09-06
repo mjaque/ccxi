@@ -2,7 +2,7 @@ from collections import defaultdict
 from db import get_connection
 
 
-def get_contexto_calificacion(modulo: str, actividad_id: int, estudiante_id: int | None = None) -> list[dict]:
+def get_contexto_calificacion(modulo: str, actividad_id: int, estudiante_id: int | None = None) -> dict:
     estudiante_fk = estudiante_id if estudiante_id is not None else -1
 
     with get_connection(modulo) as conn:
@@ -39,7 +39,15 @@ def get_contexto_calificacion(modulo: str, actividad_id: int, estudiante_id: int
             for row in result:
                 row["calificacion_actual"] = None
 
-        return result
+        evaluacion = None
+        if estudiante_id is not None:
+            row = conn.execute('''
+                SELECT evaluacion FROM "Evaluacion"
+                WHERE id_estudiante = ? AND id_actividad = ?
+            ''', (estudiante_id, actividad_id)).fetchone()
+            evaluacion = row["evaluacion"] if row is not None else None
+
+        return {"items": result, "evaluacion": evaluacion}
 
 
 def _calcular_calificaciones_actuales(conn, estudiante_id: int) -> dict[int, float | None]:
@@ -85,7 +93,13 @@ def _calcular_calificaciones_actuales(conn, estudiante_id: int) -> dict[int, flo
     return resultados
 
 
-def guardar_calificacion(modulo: str, actividad_id: int, estudiante_id: int, items: list[dict]) -> None:
+def guardar_calificacion(
+    modulo: str,
+    actividad_id: int,
+    estudiante_id: int,
+    items: list[dict],
+    evaluacion: str | None,
+) -> None:
     with get_connection(modulo) as conn:
         indicadores_existentes = {
             row["id"] for row in conn.execute(
@@ -115,6 +129,13 @@ def guardar_calificacion(modulo: str, actividad_id: int, estudiante_id: int, ite
                 VALUES (?, ?, ?, ?, ?)
             """, filas)
 
+        conn.execute('''
+            INSERT INTO "Evaluacion" (id_estudiante, id_actividad, evaluacion)
+            VALUES (?, ?, ?)
+            ON CONFLICT (id_estudiante, id_actividad)
+            DO UPDATE SET evaluacion = excluded.evaluacion
+        ''', (estudiante_id, actividad_id, evaluacion))
+
         conn.commit()
 
 
@@ -124,5 +145,9 @@ def borrar_calificacion(modulo: str, actividad_id: int, estudiante_id: int) -> b
             DELETE FROM "Calificacion"
             WHERE id_estudiante = ? AND id_actividad = ?
         """, (estudiante_id, actividad_id))
+        evaluacion_cursor = conn.execute('''
+            DELETE FROM "Evaluacion"
+            WHERE id_estudiante = ? AND id_actividad = ?
+        ''', (estudiante_id, actividad_id))
         conn.commit()
-        return cursor.rowcount > 0
+        return cursor.rowcount > 0 or evaluacion_cursor.rowcount > 0

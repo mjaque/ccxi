@@ -7,6 +7,7 @@ export class ControladorCalificaciones extends Controlador{
 	#selectEstudiante
 	#tbodyCalificaciones
 	#botonGuardar
+	#campoEvaluacion
 	#campoBuscarIndicador
 	#campoNivelAdd
 	#campoIncrementoAdd
@@ -80,6 +81,7 @@ export class ControladorCalificaciones extends Controlador{
 
 		this.#tbodyCalificaciones.innerHTML = ''
 		this.#botonGuardar.hidden = true
+		this.#campoEvaluacion.value = ''
 
 		if (!actividadId || !estudianteId)
 			return
@@ -87,6 +89,7 @@ export class ControladorCalificaciones extends Controlador{
 		try{
 			const data = await this.api.getContextoCalificacion(actividadId, estudianteId)
 			this.#renderizarIndicadores(data.items)
+			this.#campoEvaluacion.value = data.evaluacion || ''
 			this.#botonGuardar.hidden = false
 		} catch(error){
 			console.error(error)
@@ -180,7 +183,12 @@ export class ControladorCalificaciones extends Controlador{
 		}
 
 		try{
-			await this.api.guardarCalificacion(actividadId, estudianteId, items)
+			await this.api.guardarCalificacion(
+				actividadId,
+				estudianteId,
+				items,
+				this.#campoEvaluacion.value.trim() || null,
+			)
 			this.mostrarInformacion('Calificaciones guardadas correctamente.')
 			await this.#cargarContexto()
 		} catch(error){
@@ -288,6 +296,7 @@ export class ControladorCalificaciones extends Controlador{
 		this.#selectEstudiante = this.div.querySelector('#calificaciones-estudiante')
 		this.#tbodyCalificaciones = this.div.querySelector('#calificaciones-tbody')
 		this.#botonGuardar = this.div.querySelector('#calificaciones-guardar')
+		this.#campoEvaluacion = this.div.querySelector('#calificaciones-evaluacion')
 		this.#campoBuscarIndicador = this.div.querySelector('#calif-buscar')
 		this.#campoNivelAdd = this.div.querySelector('#calif-nivel-add')
 		this.#campoIncrementoAdd = this.div.querySelector('#calif-incremento-add')

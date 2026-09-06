@@ -174,7 +174,7 @@ class CCXIHandler(SimpleHTTPRequestHandler):
 
             self._send_json({
                 "ok": True,
-                "items": get_contexto_calificacion(modulo, actividad_id, estudiante_id)
+                **get_contexto_calificacion(modulo, actividad_id, estudiante_id)
             })
             return
            
@@ -667,13 +667,18 @@ class CCXIHandler(SimpleHTTPRequestHandler):
             actividad_id = self._read_optional_positive_int(data.get("actividad_id"))
             estudiante_id = self._read_optional_positive_int(data.get("estudiante_id"))
             items = self._read_calificacion_items(data.get("items"))
+            evaluacion = data.get("evaluacion")
+            if evaluacion is not None and not isinstance(evaluacion, str):
+                self._send_json({"ok": False, "error": "La evaluación debe ser texto"}, status=400)
+                return
+            evaluacion = evaluacion.strip() or None if evaluacion is not None else None
             error = self._validar_calificacion(modulo, actividad_id, estudiante_id, items)
             if error:
                 self._send_json({"ok": False, "error": error}, status=400)
                 return
 
             try:
-                guardar_calificacion(modulo, actividad_id, estudiante_id, items)
+                guardar_calificacion(modulo, actividad_id, estudiante_id, items, evaluacion)
             except ValueError as exc:
                 self._send_json({"ok": False, "error": str(exc)}, status=400)
                 return
