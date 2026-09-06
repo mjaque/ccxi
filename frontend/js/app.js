@@ -103,7 +103,6 @@ class App {
 	}
 
 	#limpiarEstadoTrasCambioModulo() {
-		console.log('Ejecutando limpiarEstadoTrasCambioModulo')
 		/*
 		if (typeof resetFormularioEstudiante === "function") resetFormularioEstudiante();
 		if (typeof resetFormularioResultado === "function") resetFormularioResultado();
