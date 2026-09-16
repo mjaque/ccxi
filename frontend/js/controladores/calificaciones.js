@@ -191,6 +191,7 @@ export class ControladorCalificaciones extends Controlador{
 			)
 			this.mostrarInformacion('Calificaciones guardadas correctamente.')
 			await this.#cargarContexto()
+			this.#selectEstudiante.focus()
 		} catch(error){
 			console.error(error)
 			this.mostrarError(error.message || 'Error al guardar las calificaciones.')
