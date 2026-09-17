@@ -6,6 +6,7 @@ from unittest.mock import patch
 from db import _migrar_modulo
 from repositories.calificaciones import (
     borrar_calificacion,
+    calcular_nota_indicador,
     get_contexto_calificacion,
     guardar_calificacion,
 )
@@ -64,6 +65,40 @@ class TestCalificaciones(unittest.TestCase):
                 'INSERT INTO "Evaluacion" VALUES (?, ?, ?)',
                 (99, 1, "Texto"),
             )
+
+
+class TestCalculoNotaIndicador(unittest.TestCase):
+
+    def test_ponderada_suma_incrementos_y_limita_a_diez(self):
+        nota = calcular_nota_indicador([
+            {"tipo_calificacion": "ponderada", "peso": 1, "nivel_logro": 8, "incremento": 5},
+            {"tipo_calificacion": "ponderada", "peso": 3, "nivel_logro": 6, "incremento": None},
+        ])
+
+        self.assertEqual(nota, 10.0)
+
+    def test_maxima_se_combina_con_ponderada(self):
+        nota = calcular_nota_indicador([
+            {"tipo_calificacion": "maxima", "peso": None, "nivel_logro": 9, "incremento": None},
+            {"tipo_calificacion": "ponderada", "peso": 1, "nivel_logro": 7, "incremento": 2},
+        ])
+
+        self.assertEqual(nota, 9.0)
+
+    def test_minima_prevalece_e_ignora_incrementos(self):
+        nota = calcular_nota_indicador([
+            {"tipo_calificacion": "minima", "peso": None, "nivel_logro": 0, "incremento": -3},
+            {"tipo_calificacion": "ponderada", "peso": 1, "nivel_logro": 8, "incremento": 4},
+        ])
+
+        self.assertEqual(nota, 1.0)
+
+    def test_incremento_limita_por_debajo_de_uno(self):
+        nota = calcular_nota_indicador([
+            {"tipo_calificacion": "ponderada", "peso": 1, "nivel_logro": 3, "incremento": -5},
+        ])
+
+        self.assertEqual(nota, 1.0)
 
 
 class TestMigracionEvaluacion(unittest.TestCase):

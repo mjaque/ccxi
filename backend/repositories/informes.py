@@ -1,6 +1,7 @@
 import statistics
 from collections import defaultdict
 from db import get_connection
+from repositories.calificaciones import calcular_nota_indicador, limitar_nota
 
 
 def _build_fecha_filter(alias_prueba: str, fecha_informe: str | None) -> tuple[str, list]:
@@ -12,14 +13,6 @@ def _build_fecha_filter(alias_prueba: str, fecha_informe: str | None) -> tuple[s
         params.append(fecha_informe)
 
     return " AND ".join(clauses), params
-
-
-def _clamp_nota_indicador(valor: float) -> float:
-    if valor < 1:
-        return 1.0
-    if valor > 10:
-        return 10.0
-    return valor
 
 
 def _calcular_cuartiles(valores: list[float]) -> dict[str, float | None]:
@@ -49,21 +42,9 @@ def _calcular_notas_indicadores(rows: list[dict]) -> dict[int, float]:
     notas: dict[int, float] = {}
 
     for id_indicador, items in por_indicador.items():
-        niveles = [item for item in items if item["nivel_logro"] is not None]
-        if not niveles:
-            continue
-
-        max_nivel = max(item["nivel_logro"] for item in niveles)
-        fecha_base = max(item["fecha"] for item in niveles if item["nivel_logro"] == max_nivel)
-
-        incremento_total = sum(
-            float(item["incremento"] or 0)
-            for item in items
-            if item["fecha"] > fecha_base
-        )
-
-        nota = _clamp_nota_indicador(float(max_nivel) + incremento_total)
-        notas[id_indicador] = nota
+        nota = calcular_nota_indicador(items)
+        if nota is not None:
+            notas[id_indicador] = nota
 
     return notas
 
@@ -138,9 +119,14 @@ def _calcular_notas_alumno(conn, alumno_id: int, fecha_informe: str | None) -> d
                 c.id_indicador,
                 c.nivel_logro,
                 c.incremento,
+                ia.tipo_calificacion,
+                ia.peso,
                 a.fecha
             FROM "Calificacion" c
             JOIN "Actividad" a ON a.id = c.id_actividad
+            LEFT JOIN "Indicador_Actividad" ia
+                ON ia.id_indicador = c.id_indicador
+               AND ia.id_actividad = c.id_actividad
             WHERE c.id_estudiante = ?
               AND {filtro_fecha}
             ORDER BY a.fecha ASC, c.id_actividad ASC, c.id_indicador ASC
@@ -349,7 +335,7 @@ def _calcular_actividades_por_resultado(conn, alumno_id: int, fecha_informe: str
         nivel = row["nivel_logro"]
         nota = None
         if nivel is not None:
-            nota = _clamp_nota_indicador(
+            nota = limitar_nota(
                 float(nivel) + float(row["incremento"] or 0)
             )
 

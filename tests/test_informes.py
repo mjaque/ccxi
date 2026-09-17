@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repositories.informes import get_listado_indicadores
+from repositories.informes import get_informe_alumnado, get_listado_indicadores
 
 
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "backend" / "schema.sql"
@@ -54,6 +54,38 @@ class TestListadoIndicadores(unittest.TestCase):
         informe = get_listado_indicadores("modulo-prueba")
 
         self.assertEqual(informe["resultados"], [])
+
+    def test_informe_usa_la_agregacion_de_calificaciones(self):
+        self.conn.execute('INSERT INTO "Estudiante" (nombre) VALUES (?)', ("Ana",))
+        self.conn.execute(
+            'INSERT INTO "Resultado" (codigo, nombre, peso) VALUES (?, ?, ?)',
+            ("RA1", "Resultado 1", 1),
+        )
+        self.conn.execute(
+            'INSERT INTO "Indicador" (codigo, nombre) VALUES (?, ?)',
+            ("IL1", "Indicador 1"),
+        )
+        self.conn.execute(
+            'INSERT INTO "Indicador_Resultado" (id_indicador, id_resultado, peso) VALUES (?, ?, ?)',
+            (1, 1, 1),
+        )
+        self.conn.executemany(
+            'INSERT INTO "Actividad" (codigo, nombre, fecha) VALUES (?, ?, ?)',
+            [("AC1", "Actividad 1", "2026-01-01"), ("AC2", "Actividad 2", "2026-01-02")],
+        )
+        self.conn.executemany(
+            'INSERT INTO "Indicador_Actividad" (id_indicador, id_actividad, tipo_calificacion, peso) VALUES (?, ?, ?, ?)',
+            [(1, 1, "ponderada", 1), (1, 2, "ponderada", 1)],
+        )
+        self.conn.executemany(
+            'INSERT INTO "Calificacion" (id_estudiante, id_indicador, id_actividad, nivel_logro, incremento) VALUES (?, ?, ?, ?, ?)',
+            [(1, 1, 1, 2, None), (1, 1, 2, 8, 1)],
+        )
+        self.conn.commit()
+
+        informe = get_informe_alumnado("modulo-prueba", 1)
+
+        self.assertEqual(informe["resultados"][0]["indicadores"][0]["nota"], 6.0)
 
 
 if __name__ == "__main__":

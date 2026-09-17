@@ -2,6 +2,47 @@ from collections import defaultdict
 from db import get_connection
 
 
+def limitar_nota(valor: float) -> float:
+    return max(1.0, min(10.0, valor))
+
+
+def calcular_nota_indicador(items: list[dict]) -> float | None:
+    """Calcula la calificación actual de un indicador."""
+    maximas = [
+        r["nivel_logro"] for r in items
+        if r.get("tipo_calificacion") == "maxima" and r["nivel_logro"] is not None
+    ]
+    minimas = [
+        r["nivel_logro"] for r in items
+        if r.get("tipo_calificacion") == "minima" and r["nivel_logro"] is not None
+    ]
+    ponderadas = [
+        (r["nivel_logro"], r.get("peso") or 1)
+        for r in items
+        if r.get("tipo_calificacion") == "ponderada" and r["nivel_logro"] is not None
+    ]
+    total_inc = sum(
+        r.get("incremento") or 0
+        for r in items
+    )
+
+    if minimas:
+        return limitar_nota(float(max(minimas)))
+
+    if maximas:
+        nota = float(max(maximas))
+        if ponderadas:
+            pond = sum(n * p for n, p in ponderadas) / sum(p for _, p in ponderadas)
+            nota = min(nota, pond)
+        return limitar_nota(nota + total_inc)
+
+    if ponderadas:
+        pond = sum(n * p for n, p in ponderadas) / sum(p for _, p in ponderadas)
+        return limitar_nota(pond + total_inc)
+
+    return None
+
+
 def get_contexto_calificacion(modulo: str, actividad_id: int, estudiante_id: int | None = None) -> dict:
     estudiante_fk = estudiante_id if estudiante_id is not None else -1
 
@@ -70,25 +111,7 @@ def _calcular_calificaciones_actuales(conn, estudiante_id: int) -> dict[int, flo
 
     resultados = {}
     for id_indicador, items in grupos.items():
-        maximas = [r["nivel_logro"] for r in items if r["tipo_calificacion"] == "maxima" and r["nivel_logro"] is not None]
-        minimas = [r["nivel_logro"] for r in items if r["tipo_calificacion"] == "minima" and r["nivel_logro"] is not None]
-        ponderadas = [(r["nivel_logro"], r["peso"] or 1)
-                      for r in items if r["tipo_calificacion"] == "ponderada" and r["nivel_logro"] is not None]
-        total_inc = sum(r["incremento"] for r in items if r["incremento"] is not None)
-
-        if minimas:
-            resultados[id_indicador] = float(max(minimas))
-        elif maximas:
-            max_of_max = float(max(maximas))
-            if ponderadas:
-                pond = sum(n * p for n, p in ponderadas) / sum(p for _, p in ponderadas)
-                resultados[id_indicador] = min(max_of_max, pond) + total_inc
-            else:
-                resultados[id_indicador] = max_of_max + total_inc
-        elif ponderadas:
-            resultados[id_indicador] = sum(n * p for n, p in ponderadas) / sum(p for _, p in ponderadas) + total_inc
-        else:
-            resultados[id_indicador] = None
+        resultados[id_indicador] = calcular_nota_indicador(items)
 
     return resultados
 
