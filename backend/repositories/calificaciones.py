@@ -10,19 +10,19 @@ def calcular_nota_indicador(items: list[dict]) -> float | None:
     """Calcula la calificación actual de un indicador."""
     maximas = [
         r["nivel_logro"] for r in items
-        if r.get("tipo_calificacion") == "maxima" and r["nivel_logro"] is not None
+        if r["tipo_calificacion"] == "maxima" and r["nivel_logro"] is not None
     ]
     minimas = [
         r["nivel_logro"] for r in items
-        if r.get("tipo_calificacion") == "minima" and r["nivel_logro"] is not None
+        if r["tipo_calificacion"] == "minima" and r["nivel_logro"] is not None
     ]
     ponderadas = [
-        (r["nivel_logro"], r.get("peso") or 1)
+        (r["nivel_logro"], r["peso"] or 1)
         for r in items
-        if r.get("tipo_calificacion") == "ponderada" and r["nivel_logro"] is not None
+        if r["tipo_calificacion"] == "ponderada" and r["nivel_logro"] is not None
     ]
     total_inc = sum(
-        r.get("incremento") or 0
+        r["incremento"] or 0
         for r in items
     )
 
