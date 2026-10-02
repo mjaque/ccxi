@@ -24,6 +24,9 @@ export class ControladorInformes extends Controlador{
 	#botonGenerarListado
 	#pMensajeListado
 
+	#botonGenerarTodosEstudiante
+	#botonGenerarTodosActividadesResultados
+
 	#cacheEstudiantes = []
 
 	constructor(div) {
@@ -344,6 +347,48 @@ export class ControladorInformes extends Controlador{
 		} catch (error) {
 			this.#pMensajeARG.textContent = error.message
 			this.#pMensajeARG.setAttribute('class', 'error')
+		}
+	}
+
+	async #generarTodosLosInformesEstudiante() {
+		const fecha = this.#inputFecha.value || null
+
+		try {
+			const estudiantes = await this.api.getEstudiantes()
+			for (const estudiante of estudiantes.items || []) {
+				try {
+					const data = await this.api.getInformeEstudiante(estudiante.id, fecha)
+					const informe = data.item
+					this.#abrirInforme(informe)
+				} catch (error) {
+					this.pMensaje.textContent = `Error para ${estudiante.nombre}: ${error.message}`
+					this.pMensaje.setAttribute('class', 'error')
+				}
+			}
+		} catch (error) {
+			this.pMensaje.textContent = error.message
+			this.pMensaje.setAttribute('class', 'error')
+		}
+	}
+
+	async #generarTodosLosInformesActividadesResultados() {
+		const fecha = this.#inputFechaAR.value || null
+
+		try {
+			const estudiantes = await this.api.getEstudiantes()
+			for (const estudiante of estudiantes.items || []) {
+				try {
+					const data = await this.api.getInformeActividadesPorResultados(estudiante.id, fecha)
+					const informe = data.item
+					this.#abrirInformeActividadesResultados(informe)
+				} catch (error) {
+					this.#pMensajeAR.textContent = `Error para ${estudiante.nombre}: ${error.message}`
+					this.#pMensajeAR.setAttribute('class', 'error')
+				}
+			}
+		} catch (error) {
+			this.#pMensajeAR.textContent = error.message
+			this.#pMensajeAR.setAttribute('class', 'error')
 		}
 	}
 
@@ -792,6 +837,9 @@ export class ControladorInformes extends Controlador{
 
 		this.#botonGenerarListado = this.div.querySelector('#listado-indicadores-generar')
 		this.#pMensajeListado = this.div.querySelector('#listado-indicadores-mensaje')
+
+		this.#botonGenerarTodosEstudiante = this.div.querySelector('#informe-generar-todos')
+		this.#botonGenerarTodosActividadesResultados = this.div.querySelector('#actividades-resultados-generar-todos')
 	}
 
 	#registrarEventos() {
@@ -800,5 +848,7 @@ export class ControladorInformes extends Controlador{
 		this.#botonGenerarGrupo.addEventListener('click', this.#generarInformeGrupo.bind(this))
 		this.#botonGenerarARG.addEventListener('click', this.#generarInformeActividadesResultadosGrupo.bind(this))
 		this.#botonGenerarListado.addEventListener('click', this.#generarListadoIndicadores.bind(this))
+		this.#botonGenerarTodosEstudiante.addEventListener('click', this.#generarTodosLosInformesEstudiante.bind(this))
+		this.#botonGenerarTodosActividadesResultados.addEventListener('click', this.#generarTodosLosInformesActividadesResultados.bind(this))
 	}
 }
