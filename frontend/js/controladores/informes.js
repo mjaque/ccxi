@@ -618,6 +618,7 @@ export class ControladorInformes extends Controlador{
 <head>
 <meta charset=UTF-8>
 <meta name=viewport content="width=device-width, initial-scale=1.0">
+<meta name="pdf-title" content="IAR_${informe.modulo}_${informe.estudiante.nombre}_${fechaMostrar}">
 <title>${this.#escaparHtml(titulo)}</title>
 <style>
 	*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -735,6 +736,7 @@ export class ControladorInformes extends Controlador{
 <head>
 <meta charset=UTF-8>
 <meta name=viewport content="width=device-width, initial-scale=1.0">
+<meta name="pdf-title" content="IE_${informe.modulo}_${informe.estudiante.nombre}_${fechaMostrar}">
 <title>${this.#escaparHtml(titulo)}</title>
 <style>
 	*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
