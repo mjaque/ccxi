@@ -3,7 +3,11 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from repositories.informes import get_informe_alumnado, get_listado_indicadores
+from repositories.informes import (
+    get_informe_actividades_por_resultados,
+    get_informe_alumnado,
+    get_listado_indicadores,
+)
 
 
 SCHEMA_PATH = Path(__file__).resolve().parent.parent / "backend" / "schema.sql"
@@ -86,6 +90,65 @@ class TestListadoIndicadores(unittest.TestCase):
         informe = get_informe_alumnado("modulo-prueba", 1)
 
         self.assertEqual(informe["resultados"][0]["indicadores"][0]["nota"], 6.0)
+
+
+class TestInformeActividadesPorResultados(unittest.TestCase):
+
+    def setUp(self):
+        self.conn = sqlite3.connect(":memory:")
+        self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA foreign_keys = ON;")
+        self.conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        self.conn.execute('INSERT INTO "Estudiante" (nombre) VALUES (?)', ("Ana",))
+        self.conn.execute(
+            'INSERT INTO "Resultado" (codigo, nombre) VALUES (?, ?)',
+            ("RA1", "Resultado 1"),
+        )
+        self.conn.executemany(
+            'INSERT INTO "Indicador" (codigo, nombre) VALUES (?, ?)',
+            [("IL1", "Indicador 1"), ("IL2", "Indicador 2")],
+        )
+        self.conn.executemany(
+            'INSERT INTO "Indicador_Resultado" (id_indicador, id_resultado, peso) VALUES (?, ?, ?)',
+            [(1, 1, 1), (2, 1, 1)],
+        )
+        self.conn.execute(
+            'INSERT INTO "Actividad" (codigo, nombre, fecha) VALUES (?, ?, ?)',
+            ("AC1", "Actividad 1", "2026-01-01"),
+        )
+        self.conn.executemany(
+            'INSERT INTO "Indicador_Actividad" (id_indicador, id_actividad, tipo_calificacion, peso) VALUES (?, ?, ?, ?)',
+            [(1, 1, "ponderada", 1), (2, 1, "ponderada", 1)],
+        )
+        self.conn.executemany(
+            'INSERT INTO "Calificacion" (id_estudiante, id_indicador, id_actividad, nivel_logro, incremento) VALUES (?, ?, ?, ?, ?)',
+            [(1, 1, 1, 7, 1.5), (1, 2, 1, 8, -1)],
+        )
+        self.conn.commit()
+        self.patch_get_connection = patch(
+            "repositories.informes.get_connection",
+            side_effect=lambda modulo: self.conn,
+        )
+        self.patch_get_connection.start()
+
+    def tearDown(self):
+        self.patch_get_connection.stop()
+        self.conn.close()
+
+    def test_desglosa_indicadores_e_incrementos_y_usa_nivel_base(self):
+        informe = get_informe_actividades_por_resultados("modulo-prueba", 1)
+
+        actividades = informe["resultados"][0]["actividades"]
+
+        self.assertEqual(
+            [(a["indicador_codigo"], a["tipo_calificacion"]) for a in actividades],
+            [("IL1", "ponderada"), ("IL1", "inc/dec"), ("IL2", "ponderada"), ("IL2", "inc/dec")],
+        )
+        self.assertEqual(actividades[0]["calificacion"], 7)
+        self.assertEqual(actividades[1]["calificacion"], 1.5)
+        self.assertIsNone(actividades[1]["peso"])
+        self.assertEqual(actividades[2]["calificacion"], 8)
+        self.assertEqual(actividades[3]["calificacion"], -1)
 
 
 if __name__ == "__main__":

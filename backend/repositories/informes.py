@@ -287,6 +287,8 @@ def _calcular_actividades_por_resultado(conn, alumno_id: int, fecha_informe: str
                 a.nombre AS actividad_nombre,
                 a.fecha AS actividad_fecha,
                 i.id AS indicador_id,
+                i.codigo AS indicador_codigo,
+                i.nombre AS indicador_nombre,
                 ir.peso AS ir_peso,
                 ia.tipo_calificacion,
                 ia.peso AS ia_peso,
@@ -329,6 +331,7 @@ def _calcular_actividades_por_resultado(conn, alumno_id: int, fecha_informe: str
                 "fecha": row["actividad_fecha"],
                 "tipo_calificacion": row["tipo_calificacion"],
                 "peso": row["ia_peso"],
+                "indicadores": [],
                 "items": [],
             }
 
@@ -338,6 +341,15 @@ def _calcular_actividades_por_resultado(conn, alumno_id: int, fecha_informe: str
             nota = limitar_nota(
                 float(nivel) + float(row["incremento"] or 0)
             )
+
+        resultados_map[res_id]["actividades"][act_id]["indicadores"].append({
+            "codigo": row["indicador_codigo"],
+            "nombre": row["indicador_nombre"],
+            "nivel_logro": row["nivel_logro"],
+            "incremento": row["incremento"],
+            "tipo_calificacion": row["tipo_calificacion"],
+            "peso": row["ia_peso"],
+        })
 
         resultados_map[res_id]["actividades"][act_id]["items"].append({
             "peso": row["ir_peso"],
@@ -382,9 +394,43 @@ def get_informe_actividades_por_resultados(
         for res_id in sorted(resultados_map, key=lambda x: resultados_map[x]["codigo"]):
             res_data = resultados_map[res_id]
 
+            actividades = []
+            for actividad in res_data["actividades"].values():
+                for indicador in actividad["indicadores"]:
+                    actividades.append({
+                        "id": actividad["id"],
+                        "codigo": actividad["codigo"],
+                        "nombre": actividad["nombre"],
+                        "fecha": actividad["fecha"],
+                        "indicador_codigo": indicador["codigo"],
+                        "indicador_nombre": indicador["nombre"],
+                        "tipo_calificacion": indicador["tipo_calificacion"],
+                        "peso": indicador["peso"],
+                        "calificacion": indicador["nivel_logro"],
+                        "incremento": None,
+                    })
+                    if indicador["incremento"] is not None:
+                        actividades.append({
+                            "id": actividad["id"],
+                            "codigo": actividad["codigo"],
+                            "nombre": actividad["nombre"],
+                            "fecha": actividad["fecha"],
+                            "indicador_codigo": indicador["codigo"],
+                            "indicador_nombre": indicador["nombre"],
+                            "tipo_calificacion": "inc/dec",
+                            "peso": None,
+                            "calificacion": indicador["incremento"],
+                            "incremento": indicador["incremento"],
+                        })
+
             actividades_ordenadas = sorted(
-                res_data["actividades"].values(),
-                key=lambda a: (a["fecha"] or "", a["codigo"])
+                actividades,
+                key=lambda a: (
+                    a["indicador_codigo"],
+                    a["fecha"] or "",
+                    a["codigo"],
+                    a["tipo_calificacion"] == "inc/dec",
+                )
             )
 
             resultados_list.append({

@@ -575,19 +575,25 @@ export class ControladorInformes extends Controlador{
 			const notaR = r.nota != null ? r.nota.toFixed(2) : 'Sin calificar'
 
 			const actividadesHtml = (r.actividades || []).map(a => {
-				const nota = a.calificacion != null ? a.calificacion.toFixed(2) : 'Sin calificar'
+				const esIncremento = a.tipo_calificacion === 'inc/dec'
+				const nota = a.calificacion != null
+					? esIncremento
+						? `${a.calificacion > 0 ? '+' : ''}${a.calificacion}`
+						: a.calificacion.toFixed(2)
+					: 'Sin calificar'
 				const fechaAct = a.fecha
 					? new Date(a.fecha + 'T00:00:00').toLocaleDateString('es-ES')
 					: '—'
 				const tipo = tipos[a.tipo_calificacion] || a.tipo_calificacion || '—'
-				const peso = a.peso != null ? a.peso : '—'
+				const peso = a.peso != null ? a.peso : ''
 				return `<tr>
+					<td>${this.#escaparHtml(a.indicador_codigo)} - ${this.#escaparHtml(a.indicador_nombre)}</td>
 					<td>${this.#escaparHtml(a.codigo)}</td>
 					<td>${this.#escaparHtml(a.nombre)}</td>
 					<td class=centro>${this.#escaparHtml(fechaAct)}</td>
 					<td class=centro>${this.#escaparHtml(tipo)}</td>
 					<td class=centro>${peso}</td>
-					<td class=centro><span ${this.#colorNota(a.calificacion)}>${nota}</span></td>
+					<td class=centro>${esIncremento ? nota : `<span ${this.#colorNota(a.calificacion)}>${nota}</span>`}</td>
 				</tr>`
 			}).join('')
 
@@ -596,6 +602,7 @@ export class ControladorInformes extends Controlador{
 				<p class=nota-resultado>Calificación: <span ${this.#colorNota(r.nota)}>${notaR}</span></p>
 				<table>
 					<thead><tr>
+						<th>Indicador</th>
 						<th>Código</th>
 						<th>Nombre</th>
 						<th>Fecha</th>
@@ -603,7 +610,7 @@ export class ControladorInformes extends Controlador{
 						<th>Peso</th>
 						<th>Calificación</th>
 					</tr></thead>
-					<tbody>${actividadesHtml || '<tr><td colspan=6 class=vacio>No hay actividades asociadas</td></tr>'}</tbody>
+					<tbody>${actividadesHtml || '<tr><td colspan=7 class=vacio>No hay actividades asociadas</td></tr>'}</tbody>
 				</table>
 			</section>`
 		}).join('')
