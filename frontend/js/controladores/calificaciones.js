@@ -108,7 +108,9 @@ export class ControladorCalificaciones extends Controlador{
 			tr.appendChild(tdInfo)
 
 			const tdActual = document.createElement('td')
-			tdActual.textContent = item.calificacion_actual ?? '-'
+			tdActual.textContent = item.calificacion_actual != null
+				? Number(item.calificacion_actual).toFixed(1)
+				: '-'
 			tr.appendChild(tdActual)
 
 			const tdIncremento = document.createElement('td')
