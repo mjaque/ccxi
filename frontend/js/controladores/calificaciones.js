@@ -200,6 +200,14 @@ export class ControladorCalificaciones extends Controlador{
 		}
 	}
 
+	#manejarAtajoGuardar(event){
+		if (event.key !== 'Enter' || !event.ctrlKey || event.target === this.#botonGuardar)
+			return
+
+		event.preventDefault()
+		this.#guardar()
+	}
+
 	async #buscarIndicadores(){
 		const texto = this.#campoBuscarIndicador.value.trim()
 
@@ -309,6 +317,7 @@ export class ControladorCalificaciones extends Controlador{
 	}
 
 	#registrarEventos(){
+		this.div.addEventListener('keydown', this.#manejarAtajoGuardar.bind(this))
 		this.#selectActividad.addEventListener('change', this.#cargarContexto.bind(this))
 		this.#selectEstudiante.addEventListener('change', this.#cargarContexto.bind(this))
 		this.#botonGuardar.addEventListener('click', this.#guardar.bind(this))
