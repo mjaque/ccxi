@@ -1,5 +1,6 @@
 import { Controlador } from './controlador.js'
 import { Estudiante } from '../modelos/estudiante.js'
+import { ordenarPorNombre } from '../ordenacion.js'
 
 export class ControladorEstudiantes extends Controlador{
 	URL_VISTA = './html/estudiantes.html'
@@ -32,7 +33,7 @@ export class ControladorEstudiantes extends Controlador{
 	/* MÉTODOS PRIVADOS */
 	async #cargar(){
 		const data = await this.api.getEstudiantes()
-		this.#cache = data.items
+		this.#cache = ordenarPorNombre(data.items)
 		this.#cargarTabla()
 	}
 
@@ -143,4 +144,3 @@ export class ControladorEstudiantes extends Controlador{
 	}
 
 }
-

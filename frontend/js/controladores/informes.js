@@ -1,4 +1,5 @@
 import { Controlador } from './controlador.js'
+import { ordenarPorNombre } from '../ordenacion.js'
 
 export class ControladorInformes extends Controlador{
 	URL_VISTA = './html/informes.html'
@@ -49,7 +50,7 @@ export class ControladorInformes extends Controlador{
 	async #cargarEstudiantes() {
 		try {
 			const data = await this.api.getEstudiantes()
-			this.#cacheEstudiantes = data.items || []
+			this.#cacheEstudiantes = ordenarPorNombre(data.items || [])
 		} catch {
 			this.#cacheEstudiantes = []
 		}

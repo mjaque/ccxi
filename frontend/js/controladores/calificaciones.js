@@ -1,4 +1,5 @@
 import { Controlador } from './controlador.js'
+import { ordenarPorNombre } from '../ordenacion.js'
 
 export class ControladorCalificaciones extends Controlador{
 	URL_VISTA = './html/calificaciones.html'
@@ -39,7 +40,7 @@ export class ControladorCalificaciones extends Controlador{
 			this.api.getEstudiantes(),
 		])
 		this.#cacheActividades = dataActividades.items
-		this.#cacheEstudiantes = dataEstudiantes.items
+		this.#cacheEstudiantes = ordenarPorNombre(dataEstudiantes.items)
 		this.#poblarSelectActividades()
 		this.#poblarSelectEstudiantes()
 		this.#cargarContexto()
