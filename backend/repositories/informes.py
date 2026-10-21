@@ -523,6 +523,39 @@ def get_informe_grupo(modulo: str, fecha_informe: str | None = None) -> dict:
         }
 
 
+def get_informe_listado_grupo(modulo: str, fecha_informe: str | None = None) -> dict:
+    """Devuelve el listado del grupo ordenado por nota final descendente."""
+    with get_connection(modulo) as conn:
+        alumnos = [
+            dict(row) for row in conn.execute("""
+                SELECT id, nombre
+                FROM Estudiante
+            """).fetchall()
+        ]
+
+        estudiantes = []
+        for alumno in alumnos:
+            datos = _calcular_notas_alumno(conn, alumno["id"], fecha_informe)
+            estudiantes.append({
+                "id": alumno["id"],
+                "nombre": alumno["nombre"],
+                "nota_final": datos["nota_final"],
+            })
+
+        estudiantes.sort(key=lambda estudiante: (
+            estudiante["nota_final"] is None,
+            -(estudiante["nota_final"] or 0),
+            estudiante["nombre"].casefold(),
+        ))
+
+        return {
+            "modulo": modulo,
+            "fecha_informe": fecha_informe,
+            "numero_estudiantes": len(estudiantes),
+            "estudiantes": estudiantes,
+        }
+
+
 def get_informe_actividades_por_resultados_grupo(
     modulo: str, fecha_informe: str | None = None
 ) -> dict:

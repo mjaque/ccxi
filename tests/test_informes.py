@@ -6,6 +6,7 @@ from unittest.mock import patch
 from repositories.informes import (
     get_informe_actividades_por_resultados,
     get_informe_alumnado,
+    get_informe_listado_grupo,
     get_listado_indicadores,
 )
 
@@ -149,6 +150,62 @@ class TestInformeActividadesPorResultados(unittest.TestCase):
         self.assertIsNone(actividades[1]["peso"])
         self.assertEqual(actividades[2]["calificacion"], 8)
         self.assertEqual(actividades[3]["calificacion"], -1)
+
+
+class TestInformeListadoGrupo(unittest.TestCase):
+
+    def setUp(self):
+        self.conn = sqlite3.connect(":memory:")
+        self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA foreign_keys = ON;")
+        self.conn.executescript(SCHEMA_PATH.read_text(encoding="utf-8"))
+        self.conn.executemany(
+            'INSERT INTO "Estudiante" (nombre) VALUES (?)',
+            [("Ana",), ("Bea",), ("Carlos",), ("Diana",)],
+        )
+        self.conn.execute(
+            'INSERT INTO "Resultado" (codigo, nombre, peso) VALUES (?, ?, ?)',
+            ("RA1", "Resultado 1", 1),
+        )
+        self.conn.execute(
+            'INSERT INTO "Indicador" (codigo, nombre) VALUES (?, ?)',
+            ("IL1", "Indicador 1"),
+        )
+        self.conn.execute(
+            'INSERT INTO "Indicador_Resultado" (id_indicador, id_resultado, peso) VALUES (?, ?, ?)',
+            (1, 1, 1),
+        )
+        self.conn.executemany(
+            'INSERT INTO "Actividad" (codigo, nombre, fecha) VALUES (?, ?, ?)',
+            [("AC1", "Actividad 1", "2026-01-01"), ("AC2", "Actividad 2", "2026-02-01")],
+        )
+        self.conn.executemany(
+            'INSERT INTO "Indicador_Actividad" (id_indicador, id_actividad, peso) VALUES (?, ?, ?)',
+            [(1, 1, 1), (1, 2, 1)],
+        )
+        self.conn.executemany(
+            'INSERT INTO "Calificacion" (id_estudiante, id_indicador, id_actividad, nivel_logro) VALUES (?, ?, ?, ?)',
+            [(1, 1, 1, 8), (2, 1, 1, 5), (3, 1, 1, 5), (4, 1, 2, 10)],
+        )
+        self.conn.commit()
+        self.patch_get_connection = patch(
+            "repositories.informes.get_connection",
+            side_effect=lambda modulo: self.conn,
+        )
+        self.patch_get_connection.start()
+
+    def tearDown(self):
+        self.patch_get_connection.stop()
+        self.conn.close()
+
+    def test_ordena_por_nota_descendente_y_deja_sin_nota_al_final(self):
+        informe = get_informe_listado_grupo("modulo-prueba", "2026-01-31")
+
+        self.assertEqual(
+            [(estudiante["nombre"], estudiante["nota_final"]) for estudiante in informe["estudiantes"]],
+            [("Ana", 8.0), ("Bea", 5.0), ("Carlos", 5.0), ("Diana", None)],
+        )
+        self.assertEqual(informe["numero_estudiantes"], 4)
 
 
 if __name__ == "__main__":

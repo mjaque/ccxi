@@ -25,6 +25,10 @@ export class ControladorInformes extends Controlador{
 	#botonGenerarListado
 	#pMensajeListado
 
+	#inputFechaListadoGrupo
+	#botonGenerarListadoGrupo
+	#pMensajeListadoGrupo
+
 	#botonGenerarTodosEstudiante
 	#botonGenerarTodosActividadesResultados
 
@@ -65,6 +69,79 @@ export class ControladorInformes extends Controlador{
 			this.#pMensajeListado.textContent = error.message
 			this.#pMensajeListado.setAttribute('class', 'error')
 		}
+	}
+
+	async #generarListadoGrupo() {
+		const fecha = this.#inputFechaListadoGrupo.value || null
+
+		try {
+			const data = await this.api.getInformeListadoGrupo(fecha)
+			this.#abrirListadoGrupo(data.item)
+		} catch (error) {
+			this.#pMensajeListadoGrupo.textContent = error.message
+			this.#pMensajeListadoGrupo.setAttribute('class', 'error')
+		}
+	}
+
+	#abrirListadoGrupo(informe) {
+		const ventana = window.open('', '_blank')
+		if (!ventana) {
+			this.#pMensajeListadoGrupo.textContent = 'No se pudo abrir la nueva pestaña. Permite ventanas emergentes.'
+			this.#pMensajeListadoGrupo.setAttribute('class', 'error')
+			return
+		}
+
+		const titulo = 'Listado de Grupo'
+		const fechaMostrar = informe.fecha_informe
+			? new Date(informe.fecha_informe + 'T00:00:00').toLocaleDateString('es-ES')
+			: '—'
+		const estudiantesHtml = informe.estudiantes.map((estudiante, indice) => {
+			const nota = estudiante.nota_final != null ? estudiante.nota_final.toFixed(2) : 'Sin calificar'
+			return `<tr>
+				<td class=centro>${indice + 1}</td>
+				<td>${this.#escaparHtml(estudiante.nombre)}</td>
+				<td class=centro><span ${this.#colorNota(estudiante.nota_final)}>${nota}</span></td>
+			</tr>`
+		}).join('')
+
+		ventana.document.open()
+		ventana.document.write(`<!DOCTYPE html>
+<html lang=es>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width, initial-scale=1.0">
+<title>${titulo}</title>
+<style>
+	*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+	body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-size: 14px; line-height: 1.6; color: #1a1a1a; background: #f5f5f5; padding: 20px; }
+	.report { max-width: 900px; margin: 0 auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 40px; }
+	h1 { font-size: 22px; color: #1a3a5c; margin-bottom: 24px; padding-bottom: 12px; border-bottom: 3px solid #1a3a5c; }
+	.header-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 24px; margin-bottom: 28px; }
+	.label { color: #666; } .value { font-weight: 600; }
+	table { width: 100%; border-collapse: collapse; font-size: 13px; }
+	thead th { background: #1a3a5c; color: #fff; padding: 8px 12px; text-align: left; font-weight: 500; }
+	tbody td { padding: 8px 12px; border-bottom: 1px solid #e0e4e8; }
+	tbody tr:nth-child(even) { background: #f5f7f9; }
+	.centro { text-align: center; } .vacio { color: #888; font-style: italic; padding: 20px; text-align: center; }
+	.footer { margin-top: 32px; padding-top: 12px; border-top: 1px solid #e0e4e8; font-size: 12px; color: #888; text-align: center; }
+	@media print { body { background: #fff; padding: 0; } .report { box-shadow: none; padding: 20px; } }
+</style>
+</head>
+<body><main class=report>
+	<h1>${titulo}</h1>
+	<div class=header-info>
+		<p><span class=label>Módulo:</span> <span class=value>${this.#escaparHtml(informe.modulo)}</span></p>
+		<p><span class=label>Fecha del informe:</span> <span class=value>${this.#escaparHtml(fechaMostrar)}</span></p>
+		<p><span class=label>Nº de estudiantes:</span> <span class=value>${informe.numero_estudiantes}</span></p>
+	</div>
+	<table>
+		<thead><tr><th>Nº</th><th>Estudiante</th><th>Calificación del módulo</th></tr></thead>
+		<tbody>${estudiantesHtml || '<tr><td colspan=3 class=vacio>No hay estudiantes en este grupo.</td></tr>'}</tbody>
+	</table>
+	<div class=footer>Generado por CCxI — Calificador de Competencias por Indicadores</div>
+</main></body>
+</html>`)
+		ventana.document.close()
 	}
 
 	#abrirListadoIndicadores(informe) {
@@ -848,6 +925,10 @@ export class ControladorInformes extends Controlador{
 		this.#botonGenerarListado = this.div.querySelector('#listado-indicadores-generar')
 		this.#pMensajeListado = this.div.querySelector('#listado-indicadores-mensaje')
 
+		this.#inputFechaListadoGrupo = this.div.querySelector('#listado-grupo-fecha')
+		this.#botonGenerarListadoGrupo = this.div.querySelector('#listado-grupo-generar')
+		this.#pMensajeListadoGrupo = this.div.querySelector('#listado-grupo-mensaje')
+
 		this.#botonGenerarTodosEstudiante = this.div.querySelector('#informe-generar-todos')
 		this.#botonGenerarTodosActividadesResultados = this.div.querySelector('#actividades-resultados-generar-todos')
 	}
@@ -858,6 +939,7 @@ export class ControladorInformes extends Controlador{
 		this.#botonGenerarGrupo.addEventListener('click', this.#generarInformeGrupo.bind(this))
 		this.#botonGenerarARG.addEventListener('click', this.#generarInformeActividadesResultadosGrupo.bind(this))
 		this.#botonGenerarListado.addEventListener('click', this.#generarListadoIndicadores.bind(this))
+		this.#botonGenerarListadoGrupo.addEventListener('click', this.#generarListadoGrupo.bind(this))
 		this.#botonGenerarTodosEstudiante.addEventListener('click', this.#generarTodosLosInformesEstudiante.bind(this))
 		this.#botonGenerarTodosActividadesResultados.addEventListener('click', this.#generarTodosLosInformesActividadesResultados.bind(this))
 	}

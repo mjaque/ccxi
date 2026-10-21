@@ -216,6 +216,12 @@ export class API{
 		return this.#pedir('/api/informes/indicadores')
 	}
 
+	async getInformeListadoGrupo(fechaInforme) {
+		let url = '/api/informes/listado-grupo'
+		if (fechaInforme) url += `?fecha_informe=${fechaInforme}`
+		return this.#pedir(url)
+	}
+
 	async getInformeGrupo(fechaInforme) {
 		let url = '/api/informes/grupo'
 		if (fechaInforme) url += `?fecha_informe=${fechaInforme}`
